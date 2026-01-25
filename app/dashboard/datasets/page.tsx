@@ -1,11 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Table2, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Table2, Edit, Trash2, Eye, Loader } from 'lucide-react';
 
 export default function DatasetsPage() {
   const [datasets, setDatasets] = useState<any[]>([]);
+  const [dataSources, setDataSources] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = () => {
+    try {
+      const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+      const loadedSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
+      setDatasets(loadedDatasets);
+      setDataSources(loadedSources);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (!confirm('Удалить этот датасет?')) return;
+    
+    const filtered = datasets.filter(d => d.id !== id);
+    localStorage.setItem('datasets', JSON.stringify(filtered));
+    setDatasets(filtered);
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="card text-center py-16">
+          <Loader className="w-12 h-12 text-orange-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-400">Загрузка датасетов...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -25,12 +63,14 @@ export default function DatasetsPage() {
       </div>
 
       {datasets.length === 0 ? (
-        <div className="card text-center py-12">
-          <Table2 className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        <div className="glass-card text-center py-16">
+          <div className="w-20 h-20 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Table2 className="w-10 h-10 text-gray-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-3">
             Нет датасетов
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-gray-400 mb-8 max-w-md mx-auto">
             Создайте датасет на основе подключенного источника данных
           </p>
           <Link href="/dashboard/datasets/new" className="btn btn-primary inline-flex items-center gap-2">
@@ -40,29 +80,46 @@ export default function DatasetsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {datasets.map((dataset) => (
-            <DatasetCard key={dataset.id} dataset={dataset} />
-          ))}
+          {datasets.map((dataset) => {
+            const source = dataSources.find(s => s.id === dataset.dataSourceId);
+            return (
+              <DatasetCard 
+                key={dataset.id} 
+                dataset={dataset} 
+                source={source}
+                onDelete={handleDelete}
+              />
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function DatasetCard({ dataset }: { dataset: any }) {
+function DatasetCard({ dataset, source, onDelete }: { 
+  dataset: any; 
+  source?: any;
+  onDelete: (id: string) => void;
+}) {
   return (
-    <div className="card hover:shadow-lg transition-shadow">
-      <div className="flex items-start justify-between">
+    <div className="card group hover:shadow-2xl hover:shadow-orange-500/10 transition-all hover:-translate-y-1 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
+      
+      <div className="relative flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
-          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <Table2 className="w-6 h-6 text-green-600" />
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-lg">
+            <Table2 className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            <h3 className="text-lg font-bold text-white group-hover:text-gradient transition-colors mb-1">
               {dataset.name}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              {dataset.fields?.length || 0} полей • {dataset.rowCount || 0} строк
+            <p className="text-sm text-gray-400 mb-1">
+              Источник: {source ? source.name : 'Неизвестно'}
+            </p>
+            <p className="text-sm text-gray-500 mb-3">
+              {dataset.fields?.length || 0} полей
             </p>
             <div className="flex flex-wrap gap-2">
               {dataset.fields?.slice(0, 5).map((field: any, index: number) => (

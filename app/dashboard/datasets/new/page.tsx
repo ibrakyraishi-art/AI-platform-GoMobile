@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, Calculator } from 'lucide-react';
 import type { Field, FieldType } from '@/types';
@@ -9,8 +9,15 @@ export default function NewDatasetPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [dataSourceId, setDataSourceId] = useState('');
+  const [dataSources, setDataSources] = useState<any[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Загружаем источники данных из localStorage
+  useEffect(() => {
+    const sources = JSON.parse(localStorage.getItem('dataSources') || '[]');
+    setDataSources(sources);
+  }, []);
 
   const addField = () => {
     setFields([
@@ -38,10 +45,20 @@ export default function NewDatasetPage() {
     setLoading(true);
 
     try {
-      // TODO: Сохранить датасет
-      console.log('Creating dataset:', { name, dataSourceId, fields });
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Создаем датасет
+      const dataset = {
+        id: crypto.randomUUID(),
+        name,
+        dataSourceId,
+        fields,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Сохраняем в localStorage
+      const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+      existingDatasets.push(dataset);
+      localStorage.setItem('datasets', JSON.stringify(existingDatasets));
       
       router.push('/dashboard/datasets');
     } catch (error) {
@@ -85,8 +102,8 @@ export default function NewDatasetPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Источник данных <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-white mb-2">
+                Источник данных <span className="text-orange-400">*</span>
               </label>
               <select
                 value={dataSourceId}
@@ -95,9 +112,17 @@ export default function NewDatasetPage() {
                 required
               >
                 <option value="">Выберите источник</option>
-                <option value="1">Google Sheets - Campaign Data</option>
-                <option value="2">Supabase - Ads Table</option>
+                {dataSources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
               </select>
+              {dataSources.length === 0 && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Сначала подключите источник данных
+                </p>
+              )}
             </div>
           </div>
         </div>
