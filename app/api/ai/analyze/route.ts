@@ -44,13 +44,14 @@ export async function POST(request: NextRequest) {
       data = [];
     }
 
-    // Проверяем наличие OpenAI API ключа
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key is not configured' },
-        { status: 500 }
-      );
-    }
+      // Проверяем наличие OpenAI API ключа (может быть в env или передан пользователем)
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey || apiKey === 'placeholder-key') {
+        return NextResponse.json(
+          { error: 'OpenAI API key is required. Please add your key in Settings.' },
+          { status: 400 }
+        );
+      }
 
     // Анализируем данные
     const analysis = await AIAnalyzer.analyzeData(

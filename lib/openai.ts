@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 import type { AIAnalysisRequest, AIAnalysisResponse } from '@/types';
 
+// Используем placeholder если ключ не задан
+// Реальный ключ будет передан из localStorage пользователя
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || 'placeholder-key',
 });
 
 export class AIAnalyzer {
