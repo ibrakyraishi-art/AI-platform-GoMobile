@@ -72,9 +72,11 @@ export class PivotTableEngine {
           try {
             // Замена {fieldName} на row[fieldName]
             let formula = field.formula;
-            const fieldMatches = formula.matchAll(/\{([^}]+)\}/g);
+            const regex = /\{([^}]+)\}/g;
+            let match;
             
-            for (const match of fieldMatches) {
+            // Используем exec() вместо matchAll() для совместимости
+            while ((match = regex.exec(field.formula)) !== null) {
               const fieldName = match[1];
               const value = row[fieldName] || 0;
               formula = formula.replace(`{${fieldName}}`, String(value));
