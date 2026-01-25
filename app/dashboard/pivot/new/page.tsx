@@ -221,7 +221,7 @@ export default function NewPivotTablePage() {
               </div>
             )}
 
-            <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded text-sm">
+            <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded text-sm">
               <p className="text-green-900 dark:text-green-200">
                 💡 Значения - это агрегации числовых полей. Например, сумма расходов или среднее CPC.
               </p>
