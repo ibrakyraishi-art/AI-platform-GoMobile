@@ -411,6 +411,7 @@ export default function NewDatasetPage() {
             </button>
           </div>
         </form>
+      )}
     </div>
   );
 }
