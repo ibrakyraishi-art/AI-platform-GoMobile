@@ -1,11 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, TrendingUp, Edit, Trash2, Download } from 'lucide-react';
 
 export default function PivotTablesPage() {
   const [pivotTables, setPivotTables] = useState<any[]>([]);
+  const [datasets, setDatasets] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = () => {
+    const loadedPivotTables = JSON.parse(localStorage.getItem('pivotTables') || '[]');
+    const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+    setPivotTables(loadedPivotTables);
+    setDatasets(loadedDatasets);
+  };
+
+  const handleDelete = (id: string) => {
+    if (!confirm('Удалить эту сводную таблицу?')) return;
+    
+    const filtered = pivotTables.filter(t => t.id !== id);
+    localStorage.setItem('pivotTables', JSON.stringify(filtered));
+    setPivotTables(filtered);
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -25,12 +45,14 @@ export default function PivotTablesPage() {
       </div>
 
       {pivotTables.length === 0 ? (
-        <div className="card text-center py-12">
-          <TrendingUp className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        <div className="glass-card text-center py-16">
+          <div className="w-20 h-20 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <TrendingUp className="w-10 h-10 text-gray-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-3">
             Нет сводных таблиц
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-gray-400 mb-8 max-w-md mx-auto">
             Создайте сводную таблицу для анализа данных
           </p>
           <Link href="/dashboard/pivot/new" className="btn btn-primary inline-flex items-center gap-2">
@@ -40,29 +62,56 @@ export default function PivotTablesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {pivotTables.map((table) => (
-            <PivotTableCard key={table.id} table={table} />
-          ))}
+          {pivotTables.map((table) => {
+            const dataset = datasets.find(d => d.id === table.datasetId);
+            return (
+              <PivotTableCard 
+                key={table.id} 
+                table={table} 
+                dataset={dataset}
+                onDelete={handleDelete}
+              />
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function PivotTableCard({ table }: { table: any }) {
+function PivotTableCard({ 
+  table, 
+  dataset, 
+  onDelete 
+}: { 
+  table: any; 
+  dataset?: any;
+  onDelete: (id: string) => void;
+}) {
+  const groupByFields = table.rows?.map((r: any) => r.field).join(', ') || 'Нет';
+  const metricsFields = table.values?.map((v: any) => `${v.type}(${v.field})`).join(', ') || 'Нет';
+
   return (
-    <div className="card hover:shadow-lg transition-shadow">
-      <div className="flex items-start justify-between">
+    <div className="card group hover:shadow-2xl hover:shadow-orange-500/10 transition-all hover:-translate-y-1 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
+      
+      <div className="relative flex items-start justify-between">
         <div className="flex items-start gap-4 flex-1">
-          <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-            <TrendingUp className="w-6 h-6 text-purple-600" />
+          <div className="p-3 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl shadow-lg">
+            <TrendingUp className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            <h3 className="text-lg font-bold text-white group-hover:text-gradient transition-colors mb-1">
               {table.name}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              Группировки: {table.groupBy?.join(', ')} • Метрики: {table.metrics?.join(', ')}
+            <p className="text-sm text-gray-400 mb-1">
+              Датасет: {dataset ? dataset.name : 'Неизвестно'}
+            </p>
+            <p className="text-sm text-gray-500 mb-2">
+              Группировки: {groupByFields}
+            </p>
+            <p className="text-sm text-gray-500">
+              Метрики: {metricsFields}
             </p>
           </div>
         </div>
@@ -74,7 +123,11 @@ function PivotTableCard({ table }: { table: any }) {
           <button className="btn btn-secondary p-2" title="Редактировать">
             <Edit className="w-4 h-4" />
           </button>
-          <button className="btn btn-secondary p-2 text-red-600" title="Удалить">
+          <button 
+            onClick={() => onDelete(table.id)}
+            className="btn btn-secondary p-2 text-red-600 hover:bg-red-500/10" 
+            title="Удалить"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
