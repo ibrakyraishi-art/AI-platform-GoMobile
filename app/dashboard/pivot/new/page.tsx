@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X } from 'lucide-react';
 import type { GroupByConfig, AggregationConfig, GroupByPeriod, AggregationType } from '@/types';
@@ -9,20 +9,20 @@ export default function NewPivotTablePage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [datasetId, setDatasetId] = useState('');
+  const [datasets, setDatasets] = useState<any[]>([]);
   const [rows, setRows] = useState<GroupByConfig[]>([]);
   const [values, setValues] = useState<AggregationConfig[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Доступные поля (TODO: загружать из выбранного датасета)
-  const availableFields = [
-    { name: 'date', label: 'Дата', type: 'date' },
-    { name: 'campaign', label: 'Кампания', type: 'string' },
-    { name: 'source', label: 'Источник', type: 'string' },
-    { name: 'impressions', label: 'Показы', type: 'number' },
-    { name: 'clicks', label: 'Клики', type: 'number' },
-    { name: 'spend', label: 'Расход', type: 'number' },
-    { name: 'conversions', label: 'Конверсии', type: 'number' },
-  ];
+  // Загружаем датасеты из localStorage
+  useEffect(() => {
+    const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+    setDatasets(loadedDatasets);
+  }, []);
+
+  // Получаем поля из выбранного датасета
+  const selectedDataset = datasets.find(d => d.id === datasetId);
+  const availableFields = selectedDataset?.fields || [];
 
   const addRow = () => {
     setRows([...rows, { field: '', period: undefined }]);
@@ -57,10 +57,21 @@ export default function NewPivotTablePage() {
     setLoading(true);
 
     try {
-      // TODO: Создать сводную таблицу
-      console.log('Creating pivot table:', { name, datasetId, rows, values });
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Создаем сводную таблицу
+      const pivotTable = {
+        id: crypto.randomUUID(),
+        name,
+        datasetId,
+        rows,
+        values,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Сохраняем в localStorage
+      const existingPivotTables = JSON.parse(localStorage.getItem('pivotTables') || '[]');
+      existingPivotTables.push(pivotTable);
+      localStorage.setItem('pivotTables', JSON.stringify(existingPivotTables));
       
       router.push('/dashboard/pivot');
     } catch (error) {
@@ -104,8 +115,8 @@ export default function NewPivotTablePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Датасет <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-white mb-2">
+                Датасет <span className="text-orange-400">*</span>
               </label>
               <select
                 value={datasetId}
@@ -114,9 +125,17 @@ export default function NewPivotTablePage() {
                 required
               >
                 <option value="">Выберите датасет</option>
-                <option value="1">Рекламные кампании - январь 2026</option>
-                <option value="2">Performance Data</option>
+                {datasets.map((dataset) => (
+                  <option key={dataset.id} value={dataset.id}>
+                    {dataset.name} ({dataset.fields?.length || 0} полей)
+                  </option>
+                ))}
               </select>
+              {datasets.length === 0 && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Сначала создайте датасет
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -189,7 +208,12 @@ export default function NewPivotTablePage() {
                   <ValueEditor
                     key={index}
                     value={value}
-                    fields={availableFields.filter(f => f.type === 'number')}
+                    fields={availableFields.filter(f => 
+                      f.type === 'number' || 
+                      f.type === 'integer' || 
+                      f.type === 'float' || 
+                      f.type === 'currency'
+                    )}
                     onUpdate={(updates) => updateValue(index, updates)}
                     onRemove={() => removeValue(index)}
                   />
@@ -260,7 +284,7 @@ function RowEditor({
         <option value="">Выберите поле</option>
         {fields.map((field) => (
           <option key={field.name} value={field.name}>
-            {field.label}
+            {field.displayName || field.name}
           </option>
         ))}
       </select>
@@ -334,7 +358,7 @@ function ValueEditor({
         <option value="">Выберите поле</option>
         {fields.map((field) => (
           <option key={field.name} value={field.name}>
-            {field.label}
+            {field.displayName || field.name}
           </option>
         ))}
       </select>
