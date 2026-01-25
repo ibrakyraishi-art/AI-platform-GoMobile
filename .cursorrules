@@ -1,0 +1,77 @@
+# AI GoMobile Project Rules
+
+## Технологии
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (PostgreSQL)
+- OpenAI API
+- Google Sheets API
+
+## Структура проекта
+
+```
+ai-gomobile/
+├── app/                    # Next.js pages
+│   ├── api/               # API routes
+│   ├── dashboard/         # Dashboard pages
+│   └── page.tsx           # Landing page
+├── components/            # React components
+│   └── ui/               # UI components
+├── lib/                   # Utilities
+│   ├── supabase.ts       # Supabase client
+│   ├── openai.ts         # OpenAI integration
+│   ├── googlesheets.ts   # Google Sheets API
+│   └── pivot.ts          # Pivot table engine
+├── types/                 # TypeScript types
+└── supabase/             # Database schema
+```
+
+## Coding Standards
+
+### TypeScript
+
+- Всегда используйте строгую типизацию
+- Избегайте `any`, используйте specific types
+- Экспортируйте типы из `types/index.ts`
+
+### React Components
+
+- Используйте функциональные компоненты
+- Применяйте TypeScript для props
+- Разделяйте логику и UI
+
+### API Routes
+
+- Обрабатывайте ошибки в try-catch
+- Возвращайте правильные HTTP статусы
+- Валидируйте входные данные
+
+### Стилизация
+
+- Используйте Tailwind CSS классы
+- Следуйте dark mode паттернам
+- Используйте responsive design
+
+## Best Practices
+
+1. **Безопасность**
+   - Никогда не коммитьте `.env.local`
+   - Используйте environment variables для ключей
+   - Валидируйте пользовательский ввод
+
+2. **Производительность**
+   - Минимизируйте API запросы
+   - Используйте React Query для кеширования
+   - Оптимизируйте изображения
+
+3. **UX**
+   - Показывайте loading states
+   - Обрабатывайте ошибки gracefully
+   - Предоставляйте понятные сообщения об ошибках
+
+4. **Код**
+   - Следуйте DRY принципу
+   - Пишите понятные комментарии
+   - Создавайте reusable компоненты
