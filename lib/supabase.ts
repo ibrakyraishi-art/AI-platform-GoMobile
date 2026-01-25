@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Используем пустые значения по умолчанию, если переменные не заданы
+// Всегда используем placeholder значения
 // Пользователь добавит свои ключи через настройки на сайте
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+const supabaseUrl = 'https://placeholder.supabase.co';
+const supabaseAnonKey = 'placeholder-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

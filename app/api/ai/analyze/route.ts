@@ -44,14 +44,8 @@ export async function POST(request: NextRequest) {
       data = [];
     }
 
-      // Проверяем наличие OpenAI API ключа (может быть в env или передан пользователем)
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'placeholder-key') {
-        return NextResponse.json(
-          { error: 'OpenAI API key is required. Please add your key in Settings.' },
-          { status: 400 }
-        );
-      }
+      // Ключ должен быть передан пользователем через localStorage
+      // Проверка будет на клиенте
 
     // Анализируем данные
     const analysis = await AIAnalyzer.analyzeData(
