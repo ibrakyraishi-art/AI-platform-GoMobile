@@ -208,7 +208,7 @@ export default function NewPivotTablePage() {
                   <ValueEditor
                     key={index}
                     value={value}
-                    fields={availableFields.filter(f => 
+                    fields={availableFields.filter((f: any) => 
                       f.type === 'number' || 
                       f.type === 'integer' || 
                       f.type === 'float' || 
