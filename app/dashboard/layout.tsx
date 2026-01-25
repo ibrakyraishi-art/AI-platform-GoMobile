@@ -11,7 +11,7 @@ import {
   Settings,
   Menu,
   X,
-  TrendingUp
+  Zap
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -26,33 +26,34 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Главная', icon: Home },
     { href: '/dashboard/datasources', label: 'Источники данных', icon: Database },
     { href: '/dashboard/datasets', label: 'Датасеты', icon: Table2 },
-    { href: '/dashboard/pivot', label: 'Сводные таблицы', icon: TrendingUp },
+    { href: '/dashboard/pivot', label: 'Сводные таблицы', icon: Table2 },
     { href: '/dashboard/ai', label: 'AI-анализ', icon: Sparkles },
     { href: '/dashboard/settings', label: 'Настройки', icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-dark-900">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 glass border-r border-gray-800 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="bg-primary-600 p-2 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between p-6 border-b border-gray-800">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-2.5 rounded-xl shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
+                <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-lg text-gray-900 dark:text-white">
-                AI GoMobile
+              <span className="font-bold text-lg">
+                <span className="text-white">AI </span>
+                <span className="text-gradient">GoMobile</span>
               </span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="lg:hidden p-2 rounded-lg hover:bg-dark-800 text-gray-400 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -60,7 +61,7 @@ export default function DashboardLayout({
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4">
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -69,14 +70,17 @@ export default function DashboardLayout({
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
                         isActive
-                          ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                          ? 'bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-400 border border-orange-500/30 shadow-lg shadow-orange-500/10'
+                          : 'text-gray-400 hover:text-white hover:bg-dark-800 border border-transparent'
                       }`}
                     >
-                      <Icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-orange-400' : 'group-hover:text-orange-400'} transition-colors`} />
+                      <span className="font-medium">{item.label}</span>
+                      {isActive && (
+                        <div className="ml-auto w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                      )}
                     </Link>
                   </li>
                 );
@@ -85,28 +89,33 @@ export default function DashboardLayout({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              v0.1.0 Beta
-            </p>
+          <div className="p-6 border-t border-gray-800">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-dark-800/50 border border-gray-800">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <div>
+                <p className="text-sm font-medium text-white">Система активна</p>
+                <p className="text-xs text-gray-500">v0.1.0 Beta</p>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className={`transition-all duration-200 ${sidebarOpen ? 'lg:ml-64' : ''}`}>
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : ''}`}>
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between px-4 py-3">
+        <header className="sticky top-0 z-40 glass border-b border-gray-800 backdrop-blur-xl">
+          <div className="flex items-center justify-between px-6 py-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2.5 rounded-xl hover:bg-dark-800 text-gray-400 hover:text-white transition-all hover:scale-105"
             >
               <Menu className="w-5 h-5" />
             </button>
             
             <div className="flex items-center gap-4">
-              <button className="btn btn-primary">
+              <button className="btn btn-primary flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
                 Новый проект
               </button>
             </div>
@@ -114,7 +123,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main className="p-8 min-h-screen">
           {children}
         </main>
       </div>
@@ -122,7 +131,7 @@ export default function DashboardLayout({
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

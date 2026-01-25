@@ -1,18 +1,40 @@
 'use client';
 
-import { Database, Table2, Sparkles, TrendingUp, Plus } from 'lucide-react';
+import { Database, Table2, Sparkles, TrendingUp, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Добро пожаловать в AI GoMobile
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          Начните с подключения источника данных
-        </p>
+      {/* Hero Section */}
+      <div className="glass-card mb-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-3 rounded-xl shadow-lg shadow-orange-500/30">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black">
+                <span className="text-white">Добро пожаловать в </span>
+                <span className="text-gradient">AI GoMobile</span>
+              </h1>
+            </div>
+          </div>
+          <p className="text-gray-400 text-lg mb-6">
+            Начните с подключения источника данных и получите мощные AI-инсайты за секунды
+          </p>
+          <div className="flex gap-4">
+            <Link href="/dashboard/datasources/new" className="btn btn-primary flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              Подключить данные
+            </Link>
+            <Link href="/dashboard/ai" className="btn btn-secondary flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              AI-анализ
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}
@@ -22,37 +44,43 @@ export default function DashboardPage() {
           title="Добавить источник"
           description="Google Sheets, Supabase, БД"
           href="/dashboard/datasources/new"
-          color="blue"
+          gradient="from-blue-500 to-cyan-500"
         />
         <QuickActionCard
           icon={<Table2 className="w-8 h-8" />}
           title="Создать датасет"
           description="Настройка полей и типов"
           href="/dashboard/datasets/new"
-          color="green"
+          gradient="from-purple-500 to-pink-500"
         />
         <QuickActionCard
           icon={<TrendingUp className="w-8 h-8" />}
           title="Сводная таблица"
           description="Группировки и агрегации"
           href="/dashboard/pivot/new"
-          color="purple"
+          gradient="from-green-500 to-emerald-500"
         />
         <QuickActionCard
           icon={<Sparkles className="w-8 h-8" />}
-          title="AI-анализ"
+          title="AI-анализ GPT-4"
           description="Получите рекомендации"
           href="/dashboard/ai"
-          color="orange"
+          gradient="from-orange-500 to-red-500"
         />
       </div>
 
       {/* Getting Started */}
       <div className="card mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Быстрый старт
-        </h2>
-        <div className="space-y-4">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold">
+            <span className="text-white">Быстрый </span>
+            <span className="text-gradient">старт</span>
+          </h2>
+          <div className="px-4 py-2 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-400 text-sm font-semibold">
+            4 простых шага
+          </div>
+        </div>
+        <div className="space-y-6">
           <Step
             number={1}
             title="Подключите источник данных"
@@ -86,12 +114,15 @@ export default function DashboardPage() {
 
       {/* Recent Activity */}
       <div className="card">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <h2 className="text-2xl font-bold text-white mb-6">
           Недавняя активность
         </h2>
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <p>Пока нет активности</p>
-          <p className="text-sm mt-2">Начните с подключения источника данных</p>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 bg-dark-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <TrendingUp className="w-8 h-8 text-gray-600" />
+          </div>
+          <p className="text-gray-400 mb-2">Пока нет активности</p>
+          <p className="text-sm text-gray-500">Начните с подключения источника данных</p>
         </div>
       </div>
     </div>
@@ -103,35 +134,36 @@ function QuickActionCard({
   title, 
   description, 
   href,
-  color 
+  gradient 
 }: { 
   icon: React.ReactNode;
   title: string;
   description: string;
   href: string;
-  color: string;
+  gradient: string;
 }) {
-  const colorClasses = {
-    blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
-    green: 'text-green-600 bg-green-50 dark:bg-green-900/20',
-    purple: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20',
-    orange: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20',
-  }[color];
-
   return (
     <Link
       href={href}
-      className="card hover:shadow-lg transition-all group cursor-pointer"
+      className="group card hover:shadow-2xl hover:shadow-orange-500/10 transition-all hover:-translate-y-2 cursor-pointer relative overflow-hidden"
     >
-      <div className={`w-16 h-16 rounded-lg ${colorClasses} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-        {icon}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
+      <div className="relative">
+        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+          <div className="text-white">
+            {icon}
+          </div>
+        </div>
+        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-gradient transition-colors">
+          {title}
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">
+          {description}
+        </p>
+        <div className="flex items-center gap-2 text-orange-400 text-sm font-semibold group-hover:gap-3 transition-all">
+          Начать <ArrowRight className="w-4 h-4" />
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-        {title}
-      </h3>
-      <p className="text-sm text-gray-600 dark:text-gray-300">
-        {description}
-      </p>
     </Link>
   );
 }
@@ -150,26 +182,27 @@ function Step({
   href: string;
 }) {
   return (
-    <div className="flex gap-4">
+    <div className="flex gap-6 group">
       <div className="flex-shrink-0">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-all ${
           completed 
-            ? 'bg-green-600 text-white' 
-            : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+            ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30' 
+            : 'bg-dark-800 text-gray-400 group-hover:bg-gradient-to-br group-hover:from-orange-500 group-hover:to-orange-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-orange-500/30'
         }`}>
           {number}
         </div>
       </div>
       <div className="flex-1">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-gradient transition-colors">
           {title}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+        <p className="text-sm text-gray-400 mb-3 leading-relaxed">
           {description}
         </p>
         {!completed && (
-          <Link href={href} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-            Начать →
+          <Link href={href} className="inline-flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold group/link">
+            Начать 
+            <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
           </Link>
         )}
       </div>
