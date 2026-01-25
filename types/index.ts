@@ -91,6 +91,7 @@ export interface Filter {
 
 // AI-анализ
 export interface AIAnalysisRequest {
+  projectId?: string;
   datasetId: string;
   pivotTableId?: string;
   prompt: string;
