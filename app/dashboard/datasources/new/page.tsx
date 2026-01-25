@@ -103,6 +103,11 @@ export default function NewDataSourcePage() {
         throw new Error(result.error || 'Не удалось подключить источник данных');
       }
 
+      // Сохраняем в localStorage
+      const existingSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
+      existingSources.push(result.data);
+      localStorage.setItem('dataSources', JSON.stringify(existingSources));
+
       // Успешно подключено
       router.push('/dashboard/datasources');
     } catch (err: any) {

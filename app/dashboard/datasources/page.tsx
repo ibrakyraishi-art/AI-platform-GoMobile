@@ -14,12 +14,9 @@ export default function DataSourcesPage() {
 
   const loadDataSources = async () => {
     try {
-      const response = await fetch('/api/datasources?projectId=default-project');
-      const result = await response.json();
-      
-      if (response.ok && result.data) {
-        setDataSources(result.data);
-      }
+      // Загружаем из localStorage
+      const sources = JSON.parse(localStorage.getItem('dataSources') || '[]');
+      setDataSources(sources);
     } catch (error) {
       console.error('Error loading data sources:', error);
     } finally {
@@ -31,13 +28,10 @@ export default function DataSourcesPage() {
     if (!confirm('Удалить этот источник данных?')) return;
 
     try {
-      const response = await fetch(`/api/datasources?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setDataSources(dataSources.filter(s => s.id !== id));
-      }
+      // Удаляем из localStorage
+      const filtered = dataSources.filter(s => s.id !== id);
+      localStorage.setItem('dataSources', JSON.stringify(filtered));
+      setDataSources(filtered);
     } catch (error) {
       console.error('Error deleting data source:', error);
     }
