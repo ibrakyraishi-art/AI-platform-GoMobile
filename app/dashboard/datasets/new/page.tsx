@@ -148,18 +148,19 @@ export default function NewDatasetPage() {
     setError(null);
 
     try {
-      // Создаем датасет
+      // Создаем датасет БЕЗ сохранения данных (чтобы не переполнять localStorage)
+      // Данные будут загружаться динамически из источника при необходимости
       const dataset = {
         id: crypto.randomUUID(),
         name,
         dataSourceId,
         fields: fields.filter(f => !f.isCalculated), // Только не вычисляемые поля
-        data: rawData, // Сохраняем данные для использования в сводных таблицах
+        rowCount: rawData.length, // Сохраняем только количество строк
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      console.log('💾 Saving dataset:', dataset);
+      console.log('💾 Saving dataset (without data):', dataset);
 
       // Сохраняем в localStorage
       const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
@@ -170,7 +171,13 @@ export default function NewDatasetPage() {
       router.push('/dashboard/datasets');
     } catch (error: any) {
       console.error('❌ Error creating dataset:', error);
-      setError(error.message || 'Не удалось создать датасет');
+      
+      // Специальная обработка ошибки переполнения localStorage
+      if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+        setError('Недостаточно места в хранилище браузера. Попробуйте удалить старые датасеты.');
+      } else {
+        setError(error.message || 'Не удалось создать датасет');
+      }
     } finally {
       setLoading(false);
     }

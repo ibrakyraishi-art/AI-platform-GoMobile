@@ -11,6 +11,7 @@ export default function DatasetsPage() {
 
   useEffect(() => {
     loadData();
+    cleanupOldDatasets();
   }, []);
 
   const loadData = () => {
@@ -23,6 +24,31 @@ export default function DatasetsPage() {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Очистка старых датасетов с сохраненными данными (для экономии места)
+  const cleanupOldDatasets = () => {
+    try {
+      const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+      let cleaned = false;
+      
+      const cleanedDatasets = loadedDatasets.map((ds: any) => {
+        if (ds.data) {
+          console.log(`🧹 Cleaning old data from dataset: ${ds.name}`);
+          cleaned = true;
+          const { data, ...rest } = ds;
+          return { ...rest, rowCount: data.length };
+        }
+        return ds;
+      });
+
+      if (cleaned) {
+        localStorage.setItem('datasets', JSON.stringify(cleanedDatasets));
+        console.log('✅ Cleaned old datasets to save space');
+      }
+    } catch (error) {
+      console.error('Error cleaning datasets:', error);
     }
   };
 
@@ -120,6 +146,7 @@ function DatasetCard({ dataset, source, onDelete }: {
             </p>
             <p className="text-sm text-gray-500 mb-3">
               {dataset.fields?.length || 0} полей
+              {dataset.rowCount && ` • ${dataset.rowCount.toLocaleString('ru-RU')} строк`}
             </p>
             <div className="flex flex-wrap gap-2">
               {dataset.fields?.slice(0, 5).map((field: any, index: number) => (
