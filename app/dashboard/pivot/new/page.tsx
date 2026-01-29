@@ -21,6 +21,8 @@ export default function NewPivotTablePage() {
   const [showCalcFieldModal, setShowCalcFieldModal] = useState(false);
   
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [rawData, setRawData] = useState<any[]>([]);
 
   useEffect(() => {
     const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
@@ -28,7 +30,82 @@ export default function NewPivotTablePage() {
   }, []);
 
   const selectedDataset = datasets.find(d => d.id === datasetId);
-  const rawData = selectedDataset?.data || [];
+
+  // Автоматически загружаем данные из источника если их нет в датасете
+  useEffect(() => {
+    const loadDataFromSource = async () => {
+      if (!selectedDataset) {
+        setRawData([]);
+        return;
+      }
+
+      // Если данные уже есть в датасете
+      if (selectedDataset.data && selectedDataset.data.length > 0) {
+        console.log('✅ Using cached data from dataset:', selectedDataset.data.length, 'rows');
+        setRawData(selectedDataset.data);
+        return;
+      }
+
+      // Загружаем из источника
+      console.log('📥 Loading data from source...');
+      setLoadingData(true);
+      
+      try {
+        const dataSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
+        const dataSource = dataSources.find((ds: any) => ds.id === selectedDataset.dataSourceId);
+        
+        if (!dataSource) {
+          console.warn('⚠️ Data source not found');
+          setRawData([]);
+          return;
+        }
+
+        // Загружаем данные из Google Sheets
+        const response = await fetch(`/api/datasources/fetch?url=${encodeURIComponent(dataSource.config.spreadsheetUrl)}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const data = await response.json();
+        
+        if (!data.data || data.data.length === 0) {
+          console.warn('⚠️ No data returned from source');
+          setRawData([]);
+          return;
+        }
+
+        // Преобразуем данные в объекты
+        const headers = data.data[0];
+        const rows = data.data.slice(1).map((row: any[]) => {
+          const obj: any = {};
+          headers.forEach((header: string, index: number) => {
+            obj[header] = row[index];
+          });
+          return obj;
+        });
+
+        console.log('✅ Loaded data from source:', rows.length, 'rows');
+        setRawData(rows);
+
+        // Сохраняем данные в датасет для следующего раза
+        const updatedDatasets = datasets.map(d => 
+          d.id === selectedDataset.id 
+            ? { ...d, data: rows, updated_at: new Date().toISOString() }
+            : d
+        );
+        localStorage.setItem('datasets', JSON.stringify(updatedDatasets));
+        console.log('💾 Cached data to dataset');
+      } catch (error) {
+        console.error('❌ Error loading data from source:', error);
+        setRawData([]);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    loadDataFromSource();
+  }, [selectedDataset, datasets]);
   
   // Разделяем поля на группировки и метрики
   const groupingFields = selectedDataset?.fields?.filter((f: any) => 
@@ -41,7 +118,7 @@ export default function NewPivotTablePage() {
 
   // REAL-TIME вычисление сводной таблицы
   const pivotData = useMemo(() => {
-    if (!selectedDataset || rows.length === 0 || values.length === 0) {
+    if (!selectedDataset || rows.length === 0 || values.length === 0 || loadingData) {
       return null;
     }
 
@@ -63,7 +140,7 @@ export default function NewPivotTablePage() {
       console.error('❌ Error calculating pivot:', error);
       return null;
     }
-  }, [rawData, rows, values, selectedDataset]);
+  }, [rawData, rows, values, selectedDataset, loadingData]);
 
   // Шаг 1: Создание проекта
   const handleCreateProject = () => {
@@ -438,10 +515,17 @@ export default function NewPivotTablePage() {
                   </span>
                 </h2>
 
-                {!rawData || rawData.length === 0 ? (
+                {loadingData ? (
+                  <div className="p-8 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+                    <p className="text-blue-300 text-center flex items-center justify-center gap-2">
+                      <span className="animate-spin">⚙️</span>
+                      Загружаю данные из источника...
+                    </p>
+                  </div>
+                ) : !rawData || rawData.length === 0 ? (
                   <div className="p-8 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                     <p className="text-yellow-300 text-center">
-                      ⚠️ В датасете нет данных. Создайте датасет заново и убедитесь что данные загружены из источника.
+                      ⚠️ Не удалось загрузить данные. Проверьте что источник данных доступен.
                     </p>
                   </div>
                 ) : !pivotData || pivotData.rows.length === 0 ? (
