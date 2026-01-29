@@ -1,40 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Database, Trash2, RefreshCw, FileSpreadsheet, Loader } from 'lucide-react';
+import { useDataSources } from '@/lib/use-storage';
 
 export default function DataSourcesPage() {
-  const [dataSources, setDataSources] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadDataSources();
-  }, []);
-
-  const loadDataSources = async () => {
-    try {
-      // Загружаем из localStorage
-      const sources = JSON.parse(localStorage.getItem('dataSources') || '[]');
-      setDataSources(sources);
-    } catch (error) {
-      console.error('Error loading data sources:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { dataSources, loading, remove } = useDataSources();
 
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить этот источник данных?')) return;
-
-    try {
-      // Удаляем из localStorage
-      const filtered = dataSources.filter(s => s.id !== id);
-      localStorage.setItem('dataSources', JSON.stringify(filtered));
-      setDataSources(filtered);
-    } catch (error) {
-      console.error('Error deleting data source:', error);
-    }
+    await remove(id);
   };
 
   if (loading) {
