@@ -160,6 +160,7 @@ export default function NewDatasetPage() {
         name,
         dataSourceId,
         fields,
+        data: rawData, // Сохраняем данные для использования в сводных таблицах
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

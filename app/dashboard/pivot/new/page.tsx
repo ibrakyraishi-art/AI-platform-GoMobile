@@ -45,10 +45,22 @@ export default function NewPivotTablePage() {
       return null;
     }
 
+    console.log('📊 Calculating pivot table...');
+    console.log('Raw data rows:', rawData?.length || 0);
+    console.log('Groupings:', rows);
+    console.log('Metrics:', values);
+
+    if (!rawData || rawData.length === 0) {
+      console.warn('⚠️ No data available in dataset');
+      return null;
+    }
+
     try {
-      return calculatePivotTable(rawData, rows, values);
+      const result = calculatePivotTable(rawData, rows, values);
+      console.log('✅ Pivot result:', result);
+      return result;
     } catch (error) {
-      console.error('Error calculating pivot:', error);
+      console.error('❌ Error calculating pivot:', error);
       return null;
     }
   }, [rawData, rows, values, selectedDataset]);
@@ -416,7 +428,7 @@ export default function NewPivotTablePage() {
             </div>
 
             {/* LIVE PREVIEW */}
-            {pivotData && (
+            {rows.length > 0 && values.length > 0 && (
               <div className="glass-card">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                   <Eye className="w-6 h-6 text-green-400" />
@@ -426,58 +438,74 @@ export default function NewPivotTablePage() {
                   </span>
                 </h2>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-700">
-                        {rows.map((row, i) => {
-                          const field = groupingFields.find((f: any) => f.name === row.field);
-                          return (
-                            <th key={i} className="text-left p-3 text-sm font-semibold text-blue-300">
-                              {field?.displayName || row.field}
-                            </th>
-                          );
-                        })}
-                        {values.map((value, i) => {
-                          const field = metricFields.find((f: any) => f.name === value.field);
-                          return (
-                            <th key={i} className="text-right p-3 text-sm font-semibold text-orange-300">
-                              {value.type === 'sum' && 'Σ '}
-                              {value.type === 'avg' && 'Ø '}
-                              {value.type === 'count' && '# '}
-                              {value.type === 'min' && 'Min '}
-                              {value.type === 'max' && 'Max '}
-                              {field?.displayName || value.field}
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pivotData.rows.slice(0, 20).map((row: any, i: number) => (
-                        <tr key={i} className="border-b border-gray-800 hover:bg-dark-800">
-                          {rows.map((r, j) => (
-                            <td key={j} className="p-3 text-white">
-                              {row[r.field] ?? '-'}
-                            </td>
-                          ))}
-                          {values.map((v, j) => (
-                            <td key={j} className="p-3 text-right font-mono text-orange-300">
-                              {typeof row[`${v.field}_${v.type}`] === 'number'
-                                ? row[`${v.field}_${v.type}`].toLocaleString('ru-RU', { maximumFractionDigits: 2 })
-                                : row[`${v.field}_${v.type}`] ?? '-'}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {pivotData.rows.length > 20 && (
-                    <p className="text-center text-gray-500 text-sm mt-4">
-                      Показано 20 из {pivotData.rows.length} строк
+                {!rawData || rawData.length === 0 ? (
+                  <div className="p-8 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                    <p className="text-yellow-300 text-center">
+                      ⚠️ В датасете нет данных. Создайте датасет заново и убедитесь что данные загружены из источника.
                     </p>
-                  )}
-                </div>
+                  </div>
+                ) : !pivotData || pivotData.rows.length === 0 ? (
+                  <div className="p-8 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+                    <p className="text-blue-300 text-center">
+                      🔄 Вычисление данных... ({rawData.length} строк в датасете)
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <p className="text-sm text-green-300">
+                        ✅ Показано {Math.min(20, pivotData.rows.length)} из {pivotData.rows.length} строк • Исходных данных: {rawData.length}
+                      </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-700">
+                            {rows.map((row, i) => {
+                              const field = groupingFields.find((f: any) => f.name === row.field);
+                              return (
+                                <th key={i} className="text-left p-3 text-sm font-semibold text-blue-300">
+                                  {field?.displayName || row.field}
+                                </th>
+                              );
+                            })}
+                            {values.map((value, i) => {
+                              const field = metricFields.find((f: any) => f.name === value.field);
+                              return (
+                                <th key={i} className="text-right p-3 text-sm font-semibold text-orange-300">
+                                  {value.type === 'sum' && 'Σ '}
+                                  {value.type === 'avg' && 'Ø '}
+                                  {value.type === 'count' && '# '}
+                                  {value.type === 'min' && 'Min '}
+                                  {value.type === 'max' && 'Max '}
+                                  {field?.displayName || value.field}
+                                </th>
+                              );
+                            })}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pivotData.rows.slice(0, 20).map((row: any, i: number) => (
+                            <tr key={i} className="border-b border-gray-800 hover:bg-dark-800">
+                              {rows.map((r, j) => (
+                                <td key={j} className="p-3 text-white">
+                                  {row[r.field] ?? '-'}
+                                </td>
+                              ))}
+                              {values.map((v, j) => (
+                                <td key={j} className="p-3 text-right font-mono text-orange-300">
+                                  {typeof row[`${v.field}_${v.type}`] === 'number'
+                                    ? row[`${v.field}_${v.type}`].toLocaleString('ru-RU', { maximumFractionDigits: 2 })
+                                    : row[`${v.field}_${v.type}`] ?? '-'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -490,9 +518,14 @@ export default function NewPivotTablePage() {
                 <h3 className="text-xl font-bold text-white mb-2">
                   Добавьте группировки и метрики
                 </h3>
-                <p className="text-gray-400">
+                <p className="text-gray-400 mb-4">
                   Выберите поля слева, и таблица будет формироваться в реальном времени
                 </p>
+                {rawData && rawData.length > 0 && (
+                  <p className="text-sm text-green-400">
+                    ✓ Данные загружены: {rawData.length} строк
+                  </p>
+                )}
               </div>
             )}
           </div>
