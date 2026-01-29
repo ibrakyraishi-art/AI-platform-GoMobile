@@ -238,3 +238,34 @@ export class PivotTableEngine {
     return csvRows.join('\n');
   }
 }
+
+/**
+ * Упрощенная функция для создания сводной таблицы
+ * Используется в real-time preview
+ */
+export function calculatePivotTable(
+  data: any[], 
+  rows: any[], 
+  values: any[]
+): { rows: any[] } {
+  if (!data || data.length === 0 || rows.length === 0 || values.length === 0) {
+    return { rows: [] };
+  }
+
+  const config: PivotTableConfig = {
+    rows: rows.map(r => ({
+      field: r.field,
+      period: r.period
+    })),
+    values: values.map(v => ({
+      field: v.field,
+      type: v.type as AggregationType,
+      alias: `${v.field}_${v.type}`
+    })),
+    filters: []
+  };
+
+  const result = PivotTableEngine.createPivotTable(data, config);
+  
+  return { rows: result };
+}
