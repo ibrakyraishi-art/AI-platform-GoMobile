@@ -162,12 +162,30 @@ export default function NewDatasetPage() {
 
       console.log('💾 Saving dataset (without data):', dataset);
 
-      // Сохраняем в localStorage
-      const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-      existingDatasets.push(dataset);
-      localStorage.setItem('datasets', JSON.stringify(existingDatasets));
+      // Сохраняем через универсальное хранилище (Supabase или localStorage)
+      const supabaseUrl = localStorage.getItem('supabase_url') || '';
+      const supabaseKey = localStorage.getItem('supabase_key') || '';
       
-      console.log('✅ Dataset saved successfully');
+      if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+        // Используем Supabase
+        const { createSupabaseClient, createDataset } = await import('@/lib/supabase-client');
+        const client = createSupabaseClient(supabaseUrl, supabaseKey);
+        await createDataset(client, {
+          id: dataset.id,
+          data_source_id: dataset.dataSourceId,
+          name: dataset.name,
+          fields: dataset.fields,
+          row_count: dataset.rowCount,
+        });
+        console.log('✅ Dataset saved to Supabase');
+      } else {
+        // Используем localStorage
+        const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+        existingDatasets.push(dataset);
+        localStorage.setItem('datasets', JSON.stringify(existingDatasets));
+        console.log('✅ Dataset saved to localStorage');
+      }
+      
       router.push('/dashboard/datasets');
     } catch (error: any) {
       console.error('❌ Error creating dataset:', error);

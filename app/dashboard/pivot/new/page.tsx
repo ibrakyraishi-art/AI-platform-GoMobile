@@ -193,9 +193,26 @@ export default function NewPivotTablePage() {
         updated_at: new Date().toISOString(),
       };
 
-      const existingPivotTables = JSON.parse(localStorage.getItem('pivotTables') || '[]');
-      existingPivotTables.push(pivotTable);
-      localStorage.setItem('pivotTables', JSON.stringify(existingPivotTables));
+      // Сохраняем через универсальное хранилище
+      const supabaseUrl = localStorage.getItem('supabase_url') || '';
+      const supabaseKey = localStorage.getItem('supabase_key') || '';
+      
+      if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+        const { createSupabaseClient, createPivotTable } = await import('@/lib/supabase-client');
+        const client = createSupabaseClient(supabaseUrl, supabaseKey);
+        await createPivotTable(client, {
+          id: pivotTable.id,
+          dataset_id: pivotTable.datasetId,
+          name: pivotTable.name,
+          config: { rows, values, filters: [] },
+        });
+        console.log('✅ Pivot table saved to Supabase');
+      } else {
+        const existingPivotTables = JSON.parse(localStorage.getItem('pivotTables') || '[]');
+        existingPivotTables.push(pivotTable);
+        localStorage.setItem('pivotTables', JSON.stringify(existingPivotTables));
+        console.log('✅ Pivot table saved to localStorage');
+      }
       
       router.push('/dashboard/pivot');
     } catch (error) {

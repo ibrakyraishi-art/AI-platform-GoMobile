@@ -103,10 +103,26 @@ export default function NewDataSourcePage() {
         throw new Error(result.error || 'Не удалось подключить источник данных');
       }
 
-      // Сохраняем в localStorage
-      const existingSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
-      existingSources.push(result.data);
-      localStorage.setItem('dataSources', JSON.stringify(existingSources));
+      // Сохраняем через универсальное хранилище (Supabase или localStorage)
+      const { create } = await import('@/lib/use-storage').then(m => ({ create: async (ds: any) => {
+        const supabaseUrl = localStorage.getItem('supabase_url') || '';
+        const supabaseKey = localStorage.getItem('supabase_key') || '';
+        
+        if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+          // Используем Supabase
+          const { createSupabaseClient, createDataSource } = await import('@/lib/supabase-client');
+          const client = createSupabaseClient(supabaseUrl, supabaseKey);
+          return await createDataSource(client, ds);
+        } else {
+          // Используем localStorage
+          const existingSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
+          existingSources.push(ds);
+          localStorage.setItem('dataSources', JSON.stringify(existingSources));
+          return ds;
+        }
+      }}));
+      
+      await create(result.data);
 
       // Успешно подключено
       router.push('/dashboard/datasources');

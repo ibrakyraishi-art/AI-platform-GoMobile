@@ -45,9 +45,32 @@ export default function NewRulePage() {
         created_at: new Date().toISOString(),
       };
 
-      const existingRules = JSON.parse(localStorage.getItem('autoRules') || '[]');
-      existingRules.push(rule);
-      localStorage.setItem('autoRules', JSON.stringify(existingRules));
+      // Сохраняем через универсальное хранилище
+      const supabaseUrl = localStorage.getItem('supabase_url') || '';
+      const supabaseKey = localStorage.getItem('supabase_key') || '';
+      
+      if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+        const { createSupabaseClient, createAutoRule } = await import('@/lib/supabase-client');
+        const client = createSupabaseClient(supabaseUrl, supabaseKey);
+        await createAutoRule(client, {
+          id: rule.id,
+          dataset_id: rule.datasetId,
+          name: rule.name,
+          field: rule.field,
+          operator: rule.operator,
+          value: rule.value,
+          period: rule.period,
+          notification_type: rule.notificationType,
+          active: rule.active,
+          condition: rule.condition,
+        });
+        console.log('✅ Rule saved to Supabase');
+      } else {
+        const existingRules = JSON.parse(localStorage.getItem('autoRules') || '[]');
+        existingRules.push(rule);
+        localStorage.setItem('autoRules', JSON.stringify(existingRules));
+        console.log('✅ Rule saved to localStorage');
+      }
       
       router.push('/dashboard/rules');
     } catch (error) {
