@@ -253,6 +253,9 @@ export function calculatePivotTable(
   }
 
   const config: PivotTableConfig = {
+    id: 'temp',
+    name: 'temp',
+    datasetId: 'temp',
     rows: rows.map(r => ({
       field: r.field,
       period: r.period
