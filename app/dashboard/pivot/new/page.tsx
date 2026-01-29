@@ -60,8 +60,14 @@ export default function NewPivotTablePage() {
           return;
         }
 
+        // Строим URL для загрузки данных из Google Sheets
+        const { spreadsheetId, sheetName } = dataSource.config;
+        const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+        
+        console.log('📊 Fetching from Google Sheets:', { spreadsheetId, sheetName });
+
         // Загружаем данные из Google Sheets
-        const response = await fetch(`/api/datasources/fetch?url=${encodeURIComponent(dataSource.config.spreadsheetUrl)}`);
+        const response = await fetch(`/api/datasources/fetch?url=${encodeURIComponent(googleSheetsUrl)}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch data');
@@ -87,15 +93,9 @@ export default function NewPivotTablePage() {
 
         console.log('✅ Loaded data from source:', rows.length, 'rows');
         setRawData(rows);
-
-        // Сохраняем данные в датасет для следующего раза
-        const updatedDatasets = datasets.map(d => 
-          d.id === selectedDataset.id 
-            ? { ...d, data: rows, updated_at: new Date().toISOString() }
-            : d
-        );
-        localStorage.setItem('datasets', JSON.stringify(updatedDatasets));
-        console.log('💾 Cached data to dataset');
+        
+        // Не сохраняем данные в датасет чтобы не переполнять localStorage
+        // Данные загружаются динамически каждый раз
       } catch (error) {
         console.error('❌ Error loading data from source:', error);
         setRawData([]);
