@@ -140,13 +140,17 @@ function DatasetCard({ dataset, source, onDelete }: {
         </div>
         
         <div className="flex gap-2">
-          <button className="btn btn-secondary p-2" title="Просмотр">
+          <Link href={`/dashboard/datasets/${dataset.id}`} className="btn btn-secondary p-2" title="Просмотр">
             <Eye className="w-4 h-4" />
-          </button>
-          <button className="btn btn-secondary p-2" title="Редактировать">
+          </Link>
+          <Link href={`/dashboard/datasets/${dataset.id}/edit`} className="btn btn-secondary p-2" title="Редактировать">
             <Edit className="w-4 h-4" />
-          </button>
-          <button className="btn btn-secondary p-2 text-red-600" title="Удалить">
+          </Link>
+          <button 
+            onClick={() => onDelete(dataset.id)}
+            className="btn btn-secondary p-2 text-red-600 hover:bg-red-500/10" 
+            title="Удалить"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>

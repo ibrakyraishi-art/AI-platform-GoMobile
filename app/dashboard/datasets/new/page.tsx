@@ -127,19 +127,6 @@ export default function NewDatasetPage() {
     }
   };
 
-  const addField = () => {
-    setFields([
-      ...fields,
-      {
-        id: crypto.randomUUID(),
-        name: '',
-        displayName: '',
-        type: 'number',
-        isCalculated: true,
-        formula: '',
-      },
-    ]);
-  };
 
   const updateField = (id: string, updates: Partial<Field>) => {
     setFields(fields.map(f => f.id === id ? { ...f, ...updates } : f));
@@ -151,7 +138,14 @@ export default function NewDatasetPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (fields.length === 0) {
+      setError('Добавьте хотя бы одно поле');
+      return;
+    }
+    
     setLoading(true);
+    setError(null);
 
     try {
       // Создаем датасет
@@ -159,20 +153,24 @@ export default function NewDatasetPage() {
         id: crypto.randomUUID(),
         name,
         dataSourceId,
-        fields,
+        fields: fields.filter(f => !f.isCalculated), // Только не вычисляемые поля
         data: rawData, // Сохраняем данные для использования в сводных таблицах
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
+
+      console.log('💾 Saving dataset:', dataset);
 
       // Сохраняем в localStorage
       const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
       existingDatasets.push(dataset);
       localStorage.setItem('datasets', JSON.stringify(existingDatasets));
       
+      console.log('✅ Dataset saved successfully');
       router.push('/dashboard/datasets');
-    } catch (error) {
-      console.error('Error creating dataset:', error);
+    } catch (error: any) {
+      console.error('❌ Error creating dataset:', error);
+      setError(error.message || 'Не удалось создать датасет');
     } finally {
       setLoading(false);
     }
@@ -313,11 +311,43 @@ export default function NewDatasetPage() {
                 <tbody>
                   {rawData.slice(0, 10).map((row, rowIndex) => (
                     <tr key={rowIndex} className="border-b border-gray-800 hover:bg-dark-700/50 transition-colors">
-                      {fields.map((field) => (
-                        <td key={field.id} className="px-4 py-3 text-gray-300">
-                          {row[field.name] ?? '-'}
-                        </td>
-                      ))}
+                      {fields.map((field) => {
+                        let displayValue = row[field.name] ?? '-';
+                        
+                        // Форматируем даты
+                        if (field.type === 'date' && displayValue !== '-') {
+                          try {
+                            // Если это Excel серийный номер (число > 40000)
+                            if (typeof displayValue === 'number' && displayValue > 40000 && displayValue < 50000) {
+                              const excelEpoch = new Date(1899, 11, 30);
+                              const date = new Date(excelEpoch.getTime() + displayValue * 86400000);
+                              displayValue = date.toLocaleDateString('ru-RU', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              });
+                            } else {
+                              // Обычная дата
+                              const date = new Date(displayValue);
+                              if (!isNaN(date.getTime())) {
+                                displayValue = date.toLocaleDateString('ru-RU', {
+                                  day: '2-digit',
+                                  month: 'long',
+                                  year: 'numeric'
+                                });
+                              }
+                            }
+                          } catch (e) {
+                            // Оставляем как есть при ошибке
+                          }
+                        }
+                        
+                        return (
+                          <td key={field.id} className="px-4 py-3 text-gray-300">
+                            {displayValue}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
@@ -332,23 +362,13 @@ export default function NewDatasetPage() {
 
           {/* Настройка полей */}
           <div className="card">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-1">
-                  Настройка полей
-                </h2>
-                <p className="text-gray-400 text-sm">
-                  Типы определены автоматически. Вы можете изменить их или удалить столбцы.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={addField}
-                className="btn btn-primary flex items-center gap-2 text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                Добавить вычисляемое поле
-              </button>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-1">
+                Настройка полей
+              </h2>
+              <p className="text-gray-400 text-sm">
+                Типы определены автоматически. Вы можете изменить их или удалить ненужные столбцы.
+              </p>
             </div>
 
             <div className="space-y-3">
@@ -362,31 +382,10 @@ export default function NewDatasetPage() {
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-              <h3 className="font-medium text-orange-300 mb-2 flex items-center gap-2">
-                <Calculator className="w-5 h-5" />
-                Вычисляемые поля
-              </h3>
-              <p className="text-sm text-gray-400 mb-3">
-                Создайте метрики на основе других полей. Например:
+            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-sm text-blue-300">
+                💡 <strong>Совет:</strong> Вычисляемые поля (CPC, CTR, ROI и др.) можно будет создать при построении сводной таблицы.
               </p>
-              <ul className="text-sm text-gray-400 space-y-2">
-                <li className="flex items-center gap-2">
-                  <code className="bg-dark-800 px-3 py-1 rounded font-mono text-orange-400">{'{ spend} / {clicks}'}</code>
-                  <span className="text-gray-500">=</span>
-                  <span className="text-white">CPC (цена за клик)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <code className="bg-dark-800 px-3 py-1 rounded font-mono text-orange-400">{'({clicks} / {impressions}) * 100'}</code>
-                  <span className="text-gray-500">=</span>
-                  <span className="text-white">CTR (%)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <code className="bg-dark-800 px-3 py-1 rounded font-mono text-orange-400">{'({revenue} - {spend}) / {spend} * 100'}</code>
-                  <span className="text-gray-500">=</span>
-                  <span className="text-white">ROI (%)</span>
-                </li>
-              </ul>
             </div>
           </div>
 
