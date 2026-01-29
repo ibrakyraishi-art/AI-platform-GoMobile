@@ -1,14 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, Send, Loader2, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Send, Loader2, TrendingUp, AlertTriangle, CheckCircle, Calendar, Filter } from 'lucide-react';
 
 export default function AIAnalysisPage() {
   const [prompt, setPrompt] = useState('');
   const [selectedDataset, setSelectedDataset] = useState('');
   const [selectedPivotTable, setSelectedPivotTable] = useState('');
+  const [datasets, setDatasets] = useState<any[]>([]);
+  const [pivotTables, setPivotTables] = useState<any[]>([]);
+  const [periodFilter, setPeriodFilter] = useState('last_7_days');
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
+
+  // Загружаем данные из localStorage
+  useEffect(() => {
+    const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+    const loadedPivotTables = JSON.parse(localStorage.getItem('pivotTables') || '[]');
+    setDatasets(loadedDatasets);
+    setPivotTables(loadedPivotTables);
+  }, []);
+
+  // Фильтруем сводные таблицы по выбранному датасету
+  const filteredPivotTables = selectedDataset 
+    ? pivotTables.filter(p => p.datasetId === selectedDataset)
+    : pivotTables;
 
   const handleAnalyze = async () => {
     if (!prompt) return;
@@ -48,11 +64,13 @@ export default function AIAnalysisPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-          <Sparkles className="w-8 h-8 text-yellow-500" />
+        <h1 className="text-4xl font-bold text-white mb-3 flex items-center gap-3">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
           AI-анализ данных
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-gray-400 text-lg">
           Получите умные выводы и рекомендации на основе ваших данных
         </p>
       </div>
@@ -61,39 +79,73 @@ export default function AIAnalysisPage() {
         {/* Панель ввода */}
         <div className="lg:col-span-2 space-y-6">
           {/* Выбор данных */}
-          <div className="card">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="glass-card">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Filter className="w-6 h-6 text-orange-400" />
               Выберите данные для анализа
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Датасет
+                <label className="block text-sm font-medium text-white mb-2">
+                  Датасет <span className="text-orange-400">*</span>
                 </label>
                 <select
                   value={selectedDataset}
-                  onChange={(e) => setSelectedDataset(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDataset(e.target.value);
+                    setSelectedPivotTable(''); // Сбрасываем выбор сводной при смене датасета
+                  }}
                   className="input w-full"
                 >
                   <option value="">Выберите датасет</option>
-                  <option value="1">Рекламные кампании - январь 2026</option>
-                  <option value="2">Performance Data</option>
+                  {datasets.map((dataset) => (
+                    <option key={dataset.id} value={dataset.id}>
+                      {dataset.name} ({dataset.fields?.length || 0} полей)
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Сводная таблица (опционально)
                 </label>
                 <select
                   value={selectedPivotTable}
                   onChange={(e) => setSelectedPivotTable(e.target.value)}
                   className="input w-full"
+                  disabled={!selectedDataset}
                 >
-                  <option value="">Не выбрано</option>
-                  <option value="1">Анализ по дням и кампаниям</option>
-                  <option value="2">Weekly Performance</option>
+                  <option value="">Все данные датасета</option>
+                  {filteredPivotTables.map((pivot) => (
+                    <option key={pivot.id} value={pivot.id}>
+                      {pivot.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-2">
+                  Если не выбрана - анализируются все данные датасета
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-orange-400" />
+                  Период данных
+                </label>
+                <select
+                  value={periodFilter}
+                  onChange={(e) => setPeriodFilter(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="all">Все данные</option>
+                  <option value="last_7_days">Последние 7 дней</option>
+                  <option value="last_14_days">Последние 14 дней</option>
+                  <option value="last_30_days">Последние 30 дней</option>
+                  <option value="last_90_days">Последние 90 дней</option>
+                  <option value="current_month">Текущий месяц</option>
+                  <option value="last_month">Прошлый месяц</option>
                 </select>
               </div>
             </div>

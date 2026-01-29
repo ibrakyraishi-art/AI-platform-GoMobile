@@ -11,7 +11,8 @@ import {
   Settings,
   Menu,
   X,
-  Zap
+  Zap,
+  Bell
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -28,6 +29,8 @@ export default function DashboardLayout({
     { href: '/dashboard/datasets', label: 'Датасеты', icon: Table2 },
     { href: '/dashboard/pivot', label: 'Сводные таблицы', icon: Table2 },
     { href: '/dashboard/ai', label: 'AI-анализ', icon: Sparkles },
+    { href: '/dashboard/rules', label: 'Автоправила', icon: Zap },
+    { href: '/dashboard/status', label: 'Статус', icon: Bell },
     { href: '/dashboard/settings', label: 'Настройки', icon: Settings },
   ];
 
