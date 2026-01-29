@@ -1,63 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Table2, Edit, Trash2, Eye, Loader } from 'lucide-react';
+import { useDatasets, useDataSources } from '@/lib/use-storage';
 
 export default function DatasetsPage() {
-  const [datasets, setDatasets] = useState<any[]>([]);
-  const [dataSources, setDataSources] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { datasets, loading } = useDatasets();
+  const { dataSources } = useDataSources();
+  const { remove } = useDatasets();
 
-  useEffect(() => {
-    loadData();
-    cleanupOldDatasets();
-  }, []);
-
-  const loadData = () => {
-    try {
-      const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-      const loadedSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
-      setDatasets(loadedDatasets);
-      setDataSources(loadedSources);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Очистка старых датасетов с сохраненными данными (для экономии места)
-  const cleanupOldDatasets = () => {
-    try {
-      const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-      let cleaned = false;
-      
-      const cleanedDatasets = loadedDatasets.map((ds: any) => {
-        if (ds.data) {
-          console.log(`🧹 Cleaning old data from dataset: ${ds.name}`);
-          cleaned = true;
-          const { data, ...rest } = ds;
-          return { ...rest, rowCount: data.length };
-        }
-        return ds;
-      });
-
-      if (cleaned) {
-        localStorage.setItem('datasets', JSON.stringify(cleanedDatasets));
-        console.log('✅ Cleaned old datasets to save space');
-      }
-    } catch (error) {
-      console.error('Error cleaning datasets:', error);
-    }
-  };
-
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Удалить этот датасет?')) return;
-    
-    const filtered = datasets.filter(d => d.id !== id);
-    localStorage.setItem('datasets', JSON.stringify(filtered));
-    setDatasets(filtered);
+    await remove(id);
   };
 
   if (loading) {

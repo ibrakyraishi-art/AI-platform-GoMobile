@@ -1,30 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, TrendingUp, Edit, Trash2, Download } from 'lucide-react';
+import { usePivotTables, useDatasets } from '@/lib/use-storage';
 
 export default function PivotTablesPage() {
-  const [pivotTables, setPivotTables] = useState<any[]>([]);
-  const [datasets, setDatasets] = useState<any[]>([]);
+  const { pivotTables, remove } = usePivotTables();
+  const { datasets } = useDatasets();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = () => {
-    const loadedPivotTables = JSON.parse(localStorage.getItem('pivotTables') || '[]');
-    const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-    setPivotTables(loadedPivotTables);
-    setDatasets(loadedDatasets);
-  };
-
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Удалить эту сводную таблицу?')) return;
-    
-    const filtered = pivotTables.filter(t => t.id !== id);
-    localStorage.setItem('pivotTables', JSON.stringify(filtered));
-    setPivotTables(filtered);
+    await remove(id);
   };
 
   return (

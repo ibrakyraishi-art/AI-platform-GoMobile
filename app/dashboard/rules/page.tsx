@@ -1,38 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Zap, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useAutoRules, useDatasets } from '@/lib/use-storage';
 
 export default function AutoRulesPage() {
-  const [rules, setRules] = useState<any[]>([]);
-  const [datasets, setDatasets] = useState<any[]>([]);
+  const { rules, update, remove } = useAutoRules();
+  const { datasets } = useDatasets();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = () => {
-    const loadedRules = JSON.parse(localStorage.getItem('autoRules') || '[]');
-    const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-    setRules(loadedRules);
-    setDatasets(loadedDatasets);
+  const toggleRule = async (id: string) => {
+    const rule = rules.find(r => r.id === id);
+    if (rule) {
+      await update(id, { active: !rule.active });
+    }
   };
 
-  const toggleRule = (id: string) => {
-    const updated = rules.map(r => 
-      r.id === id ? { ...r, active: !r.active } : r
-    );
-    localStorage.setItem('autoRules', JSON.stringify(updated));
-    setRules(updated);
-  };
-
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Удалить это автоправило?')) return;
-    
-    const filtered = rules.filter(r => r.id !== id);
-    localStorage.setItem('autoRules', JSON.stringify(filtered));
-    setRules(filtered);
+    await remove(id);
   };
 
   return (
