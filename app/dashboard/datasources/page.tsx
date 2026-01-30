@@ -5,7 +5,7 @@ import { Plus, Database, Trash2, RefreshCw, FileSpreadsheet, Loader } from 'luci
 import { useDataSources } from '@/lib/use-storage';
 
 export default function DataSourcesPage() {
-  const { dataSources, loading, remove } = useDataSources();
+  const { dataSources, loading, remove, reload } = useDataSources();
 
   const handleDelete = async (id: string) => {
     if (!confirm('Удалить этот источник данных?')) return;
@@ -63,7 +63,7 @@ export default function DataSourcesPage() {
               key={source.id} 
               source={source} 
               onDelete={handleDelete}
-              onRefresh={loadDataSources}
+              onRefresh={reload}
             />
           ))}
         </div>
