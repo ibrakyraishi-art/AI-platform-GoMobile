@@ -4,24 +4,21 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, Calculator, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import type { Field, FieldType } from '@/types';
+import { useDataSources } from '@/lib/use-storage';
 
 export default function NewDatasetPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [dataSourceId, setDataSourceId] = useState('');
-  const [dataSources, setDataSources] = useState<any[]>([]);
   const [rawData, setRawData] = useState<any[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Загружаем источники данных из localStorage
-  useEffect(() => {
-    const sources = JSON.parse(localStorage.getItem('dataSources') || '[]');
-    setDataSources(sources);
-  }, []);
+  // Загружаем источники данных из Supabase или localStorage
+  const { dataSources, loading: sourcesLoading } = useDataSources();
 
   // Автоматическое определение типа поля по данным
   const detectFieldType = (values: any[]): FieldType => {
@@ -256,17 +253,26 @@ export default function NewDatasetPage() {
                   onChange={(e) => setDataSourceId(e.target.value)}
                   className="input w-full"
                   required
+                  disabled={sourcesLoading}
                 >
-                  <option value="">Выберите источник</option>
+                  <option value="">
+                    {sourcesLoading ? 'Загрузка источников...' : 'Выберите источник'}
+                  </option>
                   {dataSources.map((source) => (
                     <option key={source.id} value={source.id}>
                       {source.name} ({source.type === 'google_sheets' ? 'Google Sheets' : source.type})
                     </option>
                   ))}
                 </select>
-                {dataSources.length === 0 && (
+                {!sourcesLoading && dataSources.length === 0 && (
                   <p className="text-sm text-gray-400 mt-2">
                     Сначала подключите источник данных
+                  </p>
+                )}
+                {sourcesLoading && (
+                  <p className="text-sm text-blue-400 mt-2 flex items-center gap-2">
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Загрузка источников из Supabase...
                   </p>
                 )}
               </div>
