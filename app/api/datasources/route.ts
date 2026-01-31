@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         // Возвращаем успешный результат с данными
         const dataSource = {
           id: crypto.randomUUID(),
-          user_id: 'demo-user', // Используем временный user_id
+          user_id: '00000000-0000-0000-0000-000000000001', // Фиксированный UUID для demo пользователя
           name,
           type,
           config,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Для других типов источников - заглушка
     const dataSource = {
       id: crypto.randomUUID(),
-      user_id: 'demo-user', // Используем временный user_id
+      user_id: '00000000-0000-0000-0000-000000000001', // Фиксированный UUID для demo пользователя
       name,
       type,
       config,

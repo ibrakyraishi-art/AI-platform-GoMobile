@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Временный demo user ID (позже заменим на реальную авторизацию)
-const DEMO_USER_ID = 'demo-user';
+const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 // Создаем клиент Supabase
 export function createSupabaseClient(url?: string, key?: string) {
