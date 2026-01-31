@@ -41,13 +41,12 @@ export async function POST(request: NextRequest) {
         // Возвращаем успешный результат с данными
         const dataSource = {
           id: crypto.randomUUID(),
-          project_id: projectId,
+          user_id: 'demo-user', // Используем временный user_id
           name,
           type,
           config,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          preview: data.slice(0, 5), // Первые 5 строк для предпросмотра
         };
 
         return NextResponse.json({ data: dataSource });
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest) {
     // Для других типов источников - заглушка
     const dataSource = {
       id: crypto.randomUUID(),
-      project_id: projectId,
+      user_id: 'demo-user', // Используем временный user_id
       name,
       type,
       config,
