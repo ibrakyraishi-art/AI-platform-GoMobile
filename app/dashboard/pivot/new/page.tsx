@@ -731,12 +731,12 @@ export default function NewPivotTablePage() {
                               <div className="flex items-center gap-2">
                                 <MoveHorizontal className="w-4 h-4 text-gray-600 group-hover:text-blue-400" />
                                 <span>{field?.displayName || row.field}</span>
-                                {sortConfig?.field === row.field && (
+                                {sortConfig?.field === row.field && sortConfig?.direction && (
                                   sortConfig.direction === 'asc' 
                                     ? <ArrowUp className="w-4 h-4" />
                                     : <ArrowDown className="w-4 h-4" />
                                 )}
-                                {!sortConfig || sortConfig.field !== row.field && (
+                                {(!sortConfig || sortConfig.field !== row.field) && (
                                   <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
                                 )}
                               </div>
@@ -753,12 +753,12 @@ export default function NewPivotTablePage() {
                               onClick={() => handleSort(key)}
                             >
                               <div className="flex items-center justify-end gap-2">
-                                {sortConfig?.field === key && (
+                                {sortConfig?.field === key && sortConfig?.direction && (
                                   sortConfig.direction === 'asc' 
                                     ? <ArrowUp className="w-4 h-4" />
                                     : <ArrowDown className="w-4 h-4" />
                                 )}
-                                {!sortConfig || sortConfig.field !== key && (
+                                {(!sortConfig || sortConfig.field !== key) && (
                                   <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
                                 )}
                                 <span>
