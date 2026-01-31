@@ -12,7 +12,9 @@ import {
   Menu,
   X,
   Zap,
-  Bell
+  Bell,
+  BarChart3,
+  Layers
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -27,7 +29,8 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Главная', icon: Home },
     { href: '/dashboard/datasources', label: 'Источники данных', icon: Database },
     { href: '/dashboard/datasets', label: 'Датасеты', icon: Table2 },
-    { href: '/dashboard/pivot', label: 'Сводные таблицы', icon: Table2 },
+    { href: '/dashboard/visualizations', label: 'Визуализации', icon: BarChart3 },
+    { href: '/dashboard/pivot', label: 'Сводные таблицы', icon: Layers },
     { href: '/dashboard/ai', label: 'AI-анализ', icon: Sparkles },
     { href: '/dashboard/rules', label: 'Автоправила', icon: Zap },
     { href: '/dashboard/status', label: 'Статус', icon: Bell },
