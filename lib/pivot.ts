@@ -246,10 +246,52 @@ export class PivotTableEngine {
 export function calculatePivotTable(
   data: any[], 
   rows: any[], 
-  values: any[]
+  values: any[],
+  calculatedFields?: any[]
 ): { rows: any[] } {
   if (!data || data.length === 0 || rows.length === 0 || values.length === 0) {
     return { rows: [] };
+  }
+
+  // Обрабатываем вычисляемые поля ПЕРЕД группировкой
+  let processedData = data;
+  if (calculatedFields && calculatedFields.length > 0) {
+    processedData = data.map(row => {
+      const newRow = { ...row };
+      
+      calculatedFields.forEach(field => {
+        if (field.formula) {
+          try {
+            const { operand1, operator, operand2 } = field.formula;
+            const val1 = Number(row[operand1]) || 0;
+            const val2 = isNaN(Number(operand2)) ? Number(row[operand2]) || 0 : Number(operand2);
+            
+            let result = 0;
+            switch (operator) {
+              case '+':
+                result = val1 + val2;
+                break;
+              case '-':
+                result = val1 - val2;
+                break;
+              case '*':
+                result = val1 * val2;
+                break;
+              case '/':
+                result = val2 !== 0 ? val1 / val2 : 0;
+                break;
+            }
+            
+            newRow[field.name] = result;
+          } catch (error) {
+            console.error(`Error calculating field ${field.name}:`, error);
+            newRow[field.name] = 0;
+          }
+        }
+      });
+      
+      return newRow;
+    });
   }
 
   const config: PivotTableConfig = {
@@ -262,13 +304,13 @@ export function calculatePivotTable(
     })),
     values: values.map(v => ({
       field: v.field,
-      type: v.type as AggregationType,
+      type: v.type === 'calculated' ? 'avg' as AggregationType : v.type as AggregationType,
       alias: `${v.field}_${v.type}`
     })),
     filters: []
   };
 
-  const result = PivotTableEngine.createPivotTable(data, config);
+  const result = PivotTableEngine.createPivotTable(processedData, config);
   
   return { rows: result };
 }
