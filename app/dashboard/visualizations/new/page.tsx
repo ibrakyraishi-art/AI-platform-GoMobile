@@ -622,54 +622,60 @@ export default function NewVisualizationPage() {
             </div>
           ) : (
             <div className="glass p-6 rounded-xl border border-gray-800">
-              {/* График */}
-              {['bar', 'line', 'area', 'scatter'].includes(visualizationType) && previewData && (
+              {/* График - Bar Chart */}
+              {visualizationType === 'bar' && previewData && (
                 <ResponsiveContainer width="100%" height={400}>
-                  {visualizationType === 'bar' && (
-                    <BarChart data={previewData.rows}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey={config.xAxis} stroke="#9ca3af" />
-                      <YAxis stroke="#9ca3af" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-                        labelStyle={{ color: '#f3f4f6' }}
-                      />
-                      <Legend />
-                      {config.yAxis.map((y: string, i: number) => (
-                        <Bar key={y} dataKey={y} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </BarChart>
-                  )}
-                  {visualizationType === 'line' && (
-                    <RechartsLine data={previewData.rows}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey={config.xAxis} stroke="#9ca3af" />
-                      <YAxis stroke="#9ca3af" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-                        labelStyle={{ color: '#f3f4f6' }}
-                      />
-                      <Legend />
-                      {config.yAxis.map((y: string, i: number) => (
-                        <Line key={y} type="monotone" dataKey={y} stroke={COLORS[i % COLORS.length]} strokeWidth={2} />
-                      ))}
-                    </RechartsLine>
-                  )}
-                  {visualizationType === 'area' && (
-                    <RechartsArea data={previewData.rows}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey={config.xAxis} stroke="#9ca3af" />
-                      <YAxis stroke="#9ca3af" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-                        labelStyle={{ color: '#f3f4f6' }}
-                      />
-                      <Legend />
-                      {config.yAxis.map((y: string, i: number) => (
-                        <Area key={y} type="monotone" dataKey={y} fill={COLORS[i % COLORS.length]} stroke={COLORS[i % COLORS.length]} />
-                      ))}
-                    </RechartsArea>
-                  )}
+                  <BarChart data={previewData.rows}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey={config.xAxis} stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
+                      labelStyle={{ color: '#f3f4f6' }}
+                    />
+                    <Legend />
+                    {config.yAxis.map((y: string, i: number) => (
+                      <Bar key={y} dataKey={y} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+
+              {/* График - Line Chart */}
+              {visualizationType === 'line' && previewData && (
+                <ResponsiveContainer width="100%" height={400}>
+                  <RechartsLine data={previewData.rows}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey={config.xAxis} stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
+                      labelStyle={{ color: '#f3f4f6' }}
+                    />
+                    <Legend />
+                    {config.yAxis.map((y: string, i: number) => (
+                      <Line key={y} type="monotone" dataKey={y} stroke={COLORS[i % COLORS.length]} strokeWidth={2} />
+                    ))}
+                  </RechartsLine>
+                </ResponsiveContainer>
+              )}
+
+              {/* График - Area Chart */}
+              {visualizationType === 'area' && previewData && (
+                <ResponsiveContainer width="100%" height={400}>
+                  <RechartsArea data={previewData.rows}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey={config.xAxis} stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
+                      labelStyle={{ color: '#f3f4f6' }}
+                    />
+                    <Legend />
+                    {config.yAxis.map((y: string, i: number) => (
+                      <Area key={y} type="monotone" dataKey={y} fill={COLORS[i % COLORS.length]} stroke={COLORS[i % COLORS.length]} />
+                    ))}
+                  </RechartsArea>
                 </ResponsiveContainer>
               )}
 
