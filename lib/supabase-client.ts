@@ -22,7 +22,7 @@ export function isSupabaseConfigured(url?: string, key?: string): boolean {
   const supabaseUrl = url || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseKey = key || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   
-  return (
+  return !!(
     supabaseUrl &&
     !supabaseUrl.includes('placeholder') &&
     supabaseKey &&
