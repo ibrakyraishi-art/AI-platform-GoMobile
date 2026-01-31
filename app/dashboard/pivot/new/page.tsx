@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, GripVertical, TrendingUp, Layers, Calculator, Eye, Save, ArrowLeft, Loader } from 'lucide-react';
 import { calculatePivotTable } from '@/lib/pivot';
-import { useDatasets } from '@/lib/use-storage';
+import { useDatasets, useDataSources } from '@/lib/use-storage';
 
 export default function NewPivotTablePage() {
   const router = useRouter();
@@ -14,8 +14,9 @@ export default function NewPivotTablePage() {
   const [name, setName] = useState('');
   const [datasetId, setDatasetId] = useState('');
   
-  // Загружаем датасеты из Supabase или localStorage
+  // Загружаем датасеты и источники из Supabase или localStorage
   const { datasets, loading: datasetsLoading } = useDatasets();
+  const { dataSources } = useDataSources();
   
   // Шаг 2: Конструктор сводной
   const [rows, setRows] = useState<any[]>([]);
@@ -49,12 +50,14 @@ export default function NewPivotTablePage() {
       setLoadingData(true);
       
       try {
-        const dataSources = JSON.parse(localStorage.getItem('dataSources') || '[]');
         const dataSource = dataSources.find((ds: any) => ds.id === selectedDataset.dataSourceId);
         
         if (!dataSource) {
           console.warn('⚠️ Data source not found');
+          console.log('Available data sources:', dataSources.length);
+          console.log('Looking for:', selectedDataset.dataSourceId);
           setRawData([]);
+          setLoadingData(false);
           return;
         }
 
@@ -103,7 +106,7 @@ export default function NewPivotTablePage() {
     };
 
     loadDataFromSource();
-  }, [selectedDataset, datasets]);
+  }, [selectedDataset, datasets, dataSources]);
   
   // Разделяем поля на группировки и метрики
   const groupingFields = selectedDataset?.fields?.filter((f: any) => 
