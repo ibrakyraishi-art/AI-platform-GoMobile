@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, GripVertical, TrendingUp, Layers, Calculator, Eye, Save, ArrowLeft } from 'lucide-react';
+import { Plus, X, GripVertical, TrendingUp, Layers, Calculator, Eye, Save, ArrowLeft, Loader } from 'lucide-react';
 import { calculatePivotTable } from '@/lib/pivot';
+import { useDatasets } from '@/lib/use-storage';
 
 export default function NewPivotTablePage() {
   const router = useRouter();
@@ -12,7 +13,9 @@ export default function NewPivotTablePage() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [datasetId, setDatasetId] = useState('');
-  const [datasets, setDatasets] = useState<any[]>([]);
+  
+  // Загружаем датасеты из Supabase или localStorage
+  const { datasets, loading: datasetsLoading } = useDatasets();
   
   // Шаг 2: Конструктор сводной
   const [rows, setRows] = useState<any[]>([]);
@@ -23,11 +26,6 @@ export default function NewPivotTablePage() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [rawData, setRawData] = useState<any[]>([]);
-
-  useEffect(() => {
-    const loadedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-    setDatasets(loadedDatasets);
-  }, []);
 
   const selectedDataset = datasets.find(d => d.id === datasetId);
 
@@ -261,14 +259,28 @@ export default function NewPivotTablePage() {
               value={datasetId}
               onChange={(e) => setDatasetId(e.target.value)}
               className="input w-full text-lg"
+              disabled={datasetsLoading}
             >
-              <option value="">Выберите датасет</option>
+              <option value="">
+                {datasetsLoading ? 'Загрузка датасетов...' : 'Выберите датасет'}
+              </option>
               {datasets.map((dataset) => (
                 <option key={dataset.id} value={dataset.id}>
-                  {dataset.name} ({dataset.fields?.length || 0} полей, {dataset.data?.length || 0} строк)
+                  {dataset.name} ({dataset.fields?.length || 0} полей{dataset.rowCount ? `, ${dataset.rowCount} строк` : ''})
                 </option>
               ))}
             </select>
+            {datasetsLoading && (
+              <p className="text-sm text-blue-400 mt-2 flex items-center gap-2">
+                <Loader className="w-4 h-4 animate-spin" />
+                Загрузка датасетов из Supabase...
+              </p>
+            )}
+            {!datasetsLoading && datasets.length === 0 && (
+              <p className="text-sm text-yellow-400 mt-2">
+                ⚠️ Сначала создайте датасет
+              </p>
+            )}
           </div>
 
           {datasetId && selectedDataset && (
