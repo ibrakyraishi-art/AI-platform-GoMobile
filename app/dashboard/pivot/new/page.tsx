@@ -681,7 +681,7 @@ export default function NewPivotTablePage() {
                           key={index}
                           className="flex items-center gap-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded-lg"
                         >
-                          <GripVertical className="w-4 h-4" text-gray-500" />
+                          <GripVertical className="w-4 h-4 text-gray-500" />
                           <select
                             value={value.type}
                             onChange={(e) => {
