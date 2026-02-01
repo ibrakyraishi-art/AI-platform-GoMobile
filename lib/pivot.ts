@@ -247,8 +247,9 @@ export function calculatePivotTable(
   data: any[], 
   rows: any[], 
   values: any[],
-  calculatedFields?: any[]
-): { rows: any[] } {
+  calculatedFields?: any[],
+  columns?: any[]
+): { rows: any[], columnHeaders?: string[] } {
   if (!data || data.length === 0 || rows.length === 0 || values.length === 0) {
     return { rows: [] };
   }
@@ -294,6 +295,12 @@ export function calculatePivotTable(
     });
   }
 
+  // Если есть столбцы - используем двумерную группировку
+  if (columns && columns.length > 0) {
+    return calculatePivotTableWithColumns(processedData, rows, columns, values);
+  }
+
+  // Обычная группировка только по строкам
   const config: PivotTableConfig = {
     id: 'temp',
     name: 'temp',
@@ -313,4 +320,103 @@ export function calculatePivotTable(
   const result = PivotTableEngine.createPivotTable(processedData, config);
   
   return { rows: result };
+}
+
+/**
+ * Полноценная сводная таблица со строками И столбцами (как в Excel)
+ */
+function calculatePivotTableWithColumns(
+  data: any[],
+  rows: any[],
+  columns: any[],
+  values: any[]
+): { rows: any[], columnHeaders: string[] } {
+  console.log('🔄 Creating pivot with ROWS and COLUMNS');
+  
+  // Получаем уникальные значения для столбцов
+  const columnValues = new Set<string>();
+  data.forEach(row => {
+    const colKey = columns.map(c => row[c.field] ?? 'N/A').join(' | ');
+    columnValues.add(colKey);
+  });
+  
+  const columnHeaders = Array.from(columnValues).sort();
+  console.log('Column headers:', columnHeaders);
+  
+  // Группируем данные по строкам
+  const rowGroups = new Map<string, any[]>();
+  data.forEach(row => {
+    const rowKey = rows.map(r => row[r.field] ?? 'N/A').join(' | ');
+    if (!rowGroups.has(rowKey)) {
+      rowGroups.set(rowKey, []);
+    }
+    rowGroups.get(rowKey)!.push(row);
+  });
+  
+  // Создаем результирующие строки
+  const result: any[] = [];
+  
+  rowGroups.forEach((groupData, rowKey) => {
+    const resultRow: any = {};
+    
+    // Добавляем значения группировочных полей строк
+    const rowKeyParts = rowKey.split(' | ');
+    rows.forEach((r, i) => {
+      resultRow[r.field] = rowKeyParts[i];
+    });
+    
+    // Для каждого столбца вычисляем значения
+    columnHeaders.forEach(colHeader => {
+      // Фильтруем данные для этой комбинации строка+столбец
+      const cellData = groupData.filter(row => {
+        const rowColKey = columns.map(c => row[c.field] ?? 'N/A').join(' | ');
+        return rowColKey === colHeader;
+      });
+      
+      // Вычисляем каждую метрику для этой ячейки
+      values.forEach(v => {
+        const colKey = `${colHeader}__${v.field}_${v.type}`;
+        
+        if (cellData.length === 0) {
+          resultRow[colKey] = null;
+          return;
+        }
+        
+        const metricValues = cellData
+          .map(row => Number(row[v.field]))
+          .filter(val => !isNaN(val) && val !== null && val !== undefined);
+        
+        if (metricValues.length === 0) {
+          resultRow[colKey] = null;
+          return;
+        }
+        
+        switch (v.type) {
+          case 'sum':
+            resultRow[colKey] = metricValues.reduce((a, b) => a + b, 0);
+            break;
+          case 'avg':
+            resultRow[colKey] = metricValues.reduce((a, b) => a + b, 0) / metricValues.length;
+            break;
+          case 'count':
+            resultRow[colKey] = metricValues.length;
+            break;
+          case 'min':
+            resultRow[colKey] = Math.min(...metricValues);
+            break;
+          case 'max':
+            resultRow[colKey] = Math.max(...metricValues);
+            break;
+          default:
+            resultRow[colKey] = metricValues.reduce((a, b) => a + b, 0);
+        }
+      });
+    });
+    
+    result.push(resultRow);
+  });
+  
+  console.log('✅ Pivot with columns created:', result.length, 'rows');
+  
+  return { rows: result, columnHeaders };
 }

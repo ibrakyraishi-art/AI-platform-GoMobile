@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, GripVertical, TrendingUp, Layers, Calculator, Eye, Save, ArrowLeft, Loader, ArrowUpDown, ArrowUp, ArrowDown, HelpCircle, MoveHorizontal } from 'lucide-react';
+import { Plus, X, GripVertical, TrendingUp, Layers, Calculator, Eye, Save, ArrowLeft, Loader, ArrowUpDown, ArrowUp, ArrowDown, HelpCircle, MoveHorizontal, Table2 } from 'lucide-react';
 import { calculatePivotTable } from '@/lib/pivot';
 import { useDatasets, useDataSources } from '@/lib/use-storage';
 
@@ -25,6 +25,7 @@ export default function NewPivotTablePage() {
   
   // Шаг 2: Конструктор сводной
   const [rows, setRows] = useState<any[]>([]);
+  const [columns, setColumns] = useState<any[]>([]); // Добавляем столбцы!
   const [values, setValues] = useState<any[]>([]);
   const [calculatedFields, setCalculatedFields] = useState<any[]>([]);
   const [showCalcFieldModal, setShowCalcFieldModal] = useState(false);
@@ -144,14 +145,14 @@ export default function NewPivotTablePage() {
     }
 
     try {
-      const result = calculatePivotTable(rawData, rows, values, calculatedFields);
+      const result = calculatePivotTable(rawData, rows, values, calculatedFields, columns);
       console.log('✅ Pivot result:', result);
       return result;
     } catch (error) {
       console.error('❌ Error calculating pivot:', error);
       return null;
     }
-  }, [rawData, rows, values, calculatedFields, selectedDataset, loadingData]);
+  }, [rawData, rows, values, calculatedFields, columns, selectedDataset, loadingData]);
 
   // Сортировка данных
   const sortedPivotData = useMemo(() => {
@@ -210,10 +211,16 @@ export default function NewPivotTablePage() {
     setStep(2);
   };
 
-  // Добавить группировку
+  // Добавить группировку (строка)
   const addGrouping = (field: any) => {
     if (rows.find(r => r.field === field.name)) return; // Уже добавлено
     setRows([...rows, { field: field.name, period: undefined }]);
+  };
+
+  // Добавить столбец
+  const addColumn = (field: any) => {
+    if (columns.find(c => c.field === field.name)) return; // Уже добавлено
+    setColumns([...columns, { field: field.name, period: undefined }]);
   };
 
   // Добавить метрику
@@ -225,6 +232,11 @@ export default function NewPivotTablePage() {
   // Удалить группировку
   const removeGrouping = (index: number) => {
     setRows(rows.filter((_, i) => i !== index));
+  };
+
+  // Удалить столбец
+  const removeColumn = (index: number) => {
+    setColumns(columns.filter((_, i) => i !== index));
   };
 
   // Удалить метрику
@@ -287,6 +299,7 @@ export default function NewPivotTablePage() {
         name,
         datasetId,
         rows,
+        columns, // Добавляем столбцы!
         values,
         calculatedFields,
         created_at: new Date().toISOString(),
@@ -463,32 +476,45 @@ export default function NewPivotTablePage() {
         {/* Левая панель: Доступные поля */}
         <div className="w-80 glass border-r border-gray-800 overflow-y-auto">
           <div className="p-6 space-y-6">
-            {/* Группировки */}
+            {/* Группировочные поля (для строк и столбцов) */}
             <div>
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Layers className="w-5 h-5 text-blue-400" />
-                Группировки
+                Группировочные поля
               </h3>
+              <p className="text-xs text-gray-400 mb-3">Добавьте в строки или столбцы</p>
               <div className="space-y-2">
                 {groupingFields.length === 0 ? (
                   <p className="text-sm text-gray-500">Нет доступных полей</p>
                 ) : (
                   groupingFields.map((field: any) => (
-                    <button
+                    <div
                       key={field.name}
-                      onClick={() => addGrouping(field)}
-                      disabled={rows.find(r => r.field === field.name)}
-                      className={`w-full text-left p-3 rounded-lg border transition-all ${
-                        rows.find(r => r.field === field.name)
-                          ? 'border-gray-700 bg-dark-800 text-gray-500 cursor-not-allowed'
-                          : 'border-gray-700 hover:border-blue-500 hover:bg-dark-800 text-white'
-                      }`}
+                      className="p-3 rounded-lg border border-gray-700 hover:border-gray-600 transition-all"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{field.displayName || field.name}</span>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-white text-sm">{field.displayName || field.name}</span>
                         <span className="text-xs text-gray-500">{field.type}</span>
                       </div>
-                    </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => addGrouping(field)}
+                          disabled={rows.find(r => r.field === field.name)}
+                          className="flex-1 text-xs py-1 px-2 rounded bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          title="Добавить в строки"
+                        >
+                          → Строки
+                        </button>
+                        <button
+                          onClick={() => addColumn(field)}
+                          disabled={columns.find(c => c.field === field.name)}
+                          className="flex-1 text-xs py-1 px-2 rounded bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          title="Добавить в столбцы"
+                        >
+                          ↓ Столбцы
+                        </button>
+                      </div>
+                    </div>
                   ))
                 )}
               </div>
@@ -569,16 +595,16 @@ export default function NewPivotTablePage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Конфигурация */}
           <div className="glass border-b border-gray-800 p-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Группировки */}
+            <div className="grid grid-cols-3 gap-6">
+              {/* Строки (Rows) */}
               <div>
                 <h3 className="text-sm font-semibold text-blue-300 mb-3 flex items-center gap-2">
                   <Layers className="w-4 h-4" />
-                  Выбранные группировки ({rows.length})
+                  Строки ({rows.length})
                 </h3>
                 <div className="space-y-2 max-h-32 overflow-y-auto">
                   {rows.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">Добавьте группировки</p>
+                    <p className="text-sm text-gray-500 italic">Добавьте строки</p>
                   ) : (
                     rows.map((row, index) => {
                       const field = groupingFields.find((f: any) => f.name === row.field);
@@ -604,15 +630,49 @@ export default function NewPivotTablePage() {
                 </div>
               </div>
 
-              {/* Показатели */}
+              {/* Столбцы (Columns) - НОВОЕ! */}
+              <div>
+                <h3 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+                  <Table2 className="w-4 h-4" />
+                  Столбцы ({columns.length})
+                </h3>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {columns.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic">Добавьте столбцы</p>
+                  ) : (
+                    columns.map((column, index) => {
+                      const field = groupingFields.find((f: any) => f.name === column.field);
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 bg-purple-500/10 border border-purple-500/30 rounded-lg"
+                        >
+                          <GripVertical className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-white flex-1">
+                            {field?.displayName || column.field}
+                          </span>
+                          <button
+                            onClick={() => removeColumn(index)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Значения (Values) */}
               <div>
                 <h3 className="text-sm font-semibold text-orange-300 mb-3 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
-                  Выбранные показатели ({values.length})
+                  Значения ({values.length})
                 </h3>
                 <div className="space-y-2 max-h-32 overflow-y-auto">
                   {values.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">Добавьте показатели</p>
+                    <p className="text-sm text-gray-500 italic">Добавьте значения</p>
                   ) : (
                     values.map((value, index) => {
                       const field = metricFields.find((f: any) => f.name === value.field);
@@ -621,7 +681,7 @@ export default function NewPivotTablePage() {
                           key={index}
                           className="flex items-center gap-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded-lg"
                         >
-                          <GripVertical className="w-4 h-4 text-gray-500" />
+                          <GripVertical className="w-4 h-4" text-gray-500" />
                           <select
                             value={value.type}
                             onChange={(e) => {
@@ -631,11 +691,11 @@ export default function NewPivotTablePage() {
                             }}
                             className="text-xs bg-dark-800 border border-gray-700 rounded px-2 py-1 text-white"
                           >
-                            <option value="sum">Сумма</option>
-                            <option value="avg">Среднее</option>
-                            <option value="count">Количество</option>
-                            <option value="min">Минимум</option>
-                            <option value="max">Максимум</option>
+                            <option value="sum">Σ</option>
+                            <option value="avg">Ø</option>
+                            <option value="count">#</option>
+                            <option value="min">Min</option>
+                            <option value="max">Max</option>
                           </select>
                           <span className="text-sm text-white flex-1">
                             {field?.displayName || value.field}
@@ -719,82 +779,152 @@ export default function NewPivotTablePage() {
                 <div className="overflow-x-auto border border-gray-800 rounded-xl">
                   <table className="w-full">
                     <thead className="bg-dark-800 sticky top-0 z-10">
-                      <tr className="border-b border-gray-700">
-                        {rows.map((row, i) => {
-                          const field = groupingFields.find((f: any) => f.name === row.field);
-                          return (
-                            <th 
-                              key={i} 
-                              className="text-left p-4 text-sm font-semibold text-blue-300 group cursor-pointer hover:bg-dark-700 transition-colors"
-                              onClick={() => handleSort(row.field)}
-                            >
-                              <div className="flex items-center gap-2">
-                                <MoveHorizontal className="w-4 h-4 text-gray-600 group-hover:text-blue-400" />
-                                <span>{field?.displayName || row.field}</span>
-                                {sortConfig?.field === row.field && sortConfig?.direction && (
-                                  sortConfig.direction === 'asc' 
-                                    ? <ArrowUp className="w-4 h-4" />
-                                    : <ArrowDown className="w-4 h-4" />
-                                )}
-                                {(!sortConfig || sortConfig.field !== row.field) && (
-                                  <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
-                                )}
-                              </div>
-                            </th>
-                          );
-                        })}
-                        {values.map((value, i) => {
-                          const field = metricFields.find((f: any) => f.name === value.field);
-                          const key = `${value.field}_${value.type}`;
-                          return (
-                            <th 
-                              key={i} 
-                              className="text-right p-4 text-sm font-semibold text-orange-300 group cursor-pointer hover:bg-dark-700 transition-colors"
-                              onClick={() => handleSort(key)}
-                            >
-                              <div className="flex items-center justify-end gap-2">
-                                {sortConfig?.field === key && sortConfig?.direction && (
-                                  sortConfig.direction === 'asc' 
-                                    ? <ArrowUp className="w-4 h-4" />
-                                    : <ArrowDown className="w-4 h-4" />
-                                )}
-                                {(!sortConfig || sortConfig.field !== key) && (
-                                  <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
-                                )}
-                                <span>
-                                  {value.type === 'sum' && 'Σ '}
-                                  {value.type === 'avg' && 'Ø '}
-                                  {value.type === 'count' && '# '}
-                                  {value.type === 'min' && 'Min '}
-                                  {value.type === 'max' && 'Max '}
-                                  {field?.displayName || value.field}
-                                </span>
-                              </div>
-                            </th>
-                          );
-                        })}
-                      </tr>
+                      {/* Если есть столбцы - двухуровневый заголовок */}
+                      {columns.length > 0 && sortedPivotData.columnHeaders ? (
+                        <>
+                          {/* Верхний ряд: заголовки столбцов */}
+                          <tr className="border-b border-gray-700">
+                            {rows.map((row, i) => (
+                              <th 
+                                key={i} 
+                                rowSpan={2}
+                                className="text-left p-4 text-sm font-semibold text-blue-300 bg-dark-900 border-r border-gray-700"
+                              >
+                                {groupingFields.find((f: any) => f.name === row.field)?.displayName || row.field}
+                              </th>
+                            ))}
+                            {sortedPivotData.columnHeaders.map((colHeader, i) => (
+                              <th 
+                                key={i}
+                                colSpan={values.length}
+                                className="text-center p-4 text-sm font-semibold text-purple-300 border-x border-gray-700"
+                              >
+                                {colHeader}
+                              </th>
+                            ))}
+                          </tr>
+                          {/* Нижний ряд: показатели для каждого столбца */}
+                          <tr className="border-b border-gray-700">
+                            {sortedPivotData.columnHeaders.map((colHeader, colIdx) => (
+                              values.map((value, valIdx) => {
+                                const field = metricFields.find((f: any) => f.name === value.field);
+                                return (
+                                  <th 
+                                    key={`${colIdx}-${valIdx}`}
+                                    className="text-right p-3 text-xs font-semibold text-orange-300 border-x border-gray-700/50"
+                                  >
+                                    {value.type === 'sum' && 'Σ '}
+                                    {value.type === 'avg' && 'Ø '}
+                                    {value.type === 'count' && '# '}
+                                    {value.type === 'min' && 'Min '}
+                                    {value.type === 'max' && 'Max '}
+                                    {field?.displayName || value.field}
+                                  </th>
+                                );
+                              })
+                            ))}
+                          </tr>
+                        </>
+                      ) : (
+                        /* Обычный заголовок без столбцов */
+                        <tr className="border-b border-gray-700">
+                          {rows.map((row, i) => {
+                            const field = groupingFields.find((f: any) => f.name === row.field);
+                            return (
+                              <th 
+                                key={i} 
+                                className="text-left p-4 text-sm font-semibold text-blue-300 group cursor-pointer hover:bg-dark-700 transition-colors"
+                                onClick={() => handleSort(row.field)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <MoveHorizontal className="w-4 h-4 text-gray-600 group-hover:text-blue-400" />
+                                  <span>{field?.displayName || row.field}</span>
+                                  {sortConfig?.field === row.field && sortConfig?.direction && (
+                                    sortConfig.direction === 'asc' 
+                                      ? <ArrowUp className="w-4 h-4" />
+                                      : <ArrowDown className="w-4 h-4" />
+                                  )}
+                                  {(!sortConfig || sortConfig.field !== row.field) && (
+                                    <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
+                                  )}
+                                </div>
+                              </th>
+                            );
+                          })}
+                          {values.map((value, i) => {
+                            const field = metricFields.find((f: any) => f.name === value.field);
+                            const key = `${value.field}_${value.type}`;
+                            return (
+                              <th 
+                                key={i} 
+                                className="text-right p-4 text-sm font-semibold text-orange-300 group cursor-pointer hover:bg-dark-700 transition-colors"
+                                onClick={() => handleSort(key)}
+                              >
+                                <div className="flex items-center justify-end gap-2">
+                                  {sortConfig?.field === key && sortConfig?.direction && (
+                                    sortConfig.direction === 'asc' 
+                                      ? <ArrowUp className="w-4 h-4" />
+                                      : <ArrowDown className="w-4 h-4" />
+                                  )}
+                                  {(!sortConfig || sortConfig.field !== key) && (
+                                    <ArrowUpDown className="w-4 h-4 opacity-0 group-hover:opacity-50" />
+                                  )}
+                                  <span>
+                                    {value.type === 'sum' && 'Σ '}
+                                    {value.type === 'avg' && 'Ø '}
+                                    {value.type === 'count' && '# '}
+                                    {value.type === 'min' && 'Min '}
+                                    {value.type === 'max' && 'Max '}
+                                    {field?.displayName || value.field}
+                                  </span>
+                                </div>
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      )}
                     </thead>
                     <tbody>
                       {sortedPivotData.rows.slice(0, 100).map((row: any, i: number) => (
                         <tr key={i} className="border-b border-gray-800 hover:bg-dark-800/50 transition-colors">
+                          {/* Строки (группировки) */}
                           {rows.map((r, j) => (
-                            <td key={j} className="p-4 text-white">
+                            <td key={j} className="p-4 text-white font-medium bg-dark-900/50">
                               {row[r.field] ?? '-'}
                             </td>
                           ))}
-                          {values.map((v, j) => (
-                            <td key={j} className="p-4 text-right font-mono text-orange-300">
-                              {typeof row[`${v.field}_${v.type}`] === 'number'
-                                ? row[`${v.field}_${v.type}`].toLocaleString('ru-RU', { maximumFractionDigits: 2 })
-                                : row[`${v.field}_${v.type}`] ?? '-'}
-                            </td>
-                          ))}
+                          
+                          {/* Значения */}
+                          {columns.length > 0 && sortedPivotData.columnHeaders ? (
+                            /* Если есть столбцы - показываем значения для каждого столбца */
+                            sortedPivotData.columnHeaders.map((colHeader, colIdx) => (
+                              values.map((v, valIdx) => {
+                                const cellKey = `${colHeader}__${v.field}_${v.type}`;
+                                const cellValue = row[cellKey];
+                                return (
+                                  <td key={`${colIdx}-${valIdx}`} className="p-3 text-right font-mono text-sm text-orange-300">
+                                    {typeof cellValue === 'number'
+                                      ? cellValue.toLocaleString('ru-RU', { maximumFractionDigits: 2 })
+                                      : cellValue ?? '-'}
+                                  </td>
+                                );
+                              })
+                            ))
+                          ) : (
+                            /* Обычные значения без столбцов */
+                            values.map((v, j) => (
+                              <td key={j} className="p-4 text-right font-mono text-orange-300">
+                                {typeof row[`${v.field}_${v.type}`] === 'number'
+                                  ? row[`${v.field}_${v.type}`].toLocaleString('ru-RU', { maximumFractionDigits: 2 })
+                                  : row[`${v.field}_${v.type}`] ?? '-'}
+                              </td>
+                            ))
+                          )}
                         </tr>
                       ))}
                       
                       {/* Итоговая строка */}
-                      {showTotals && totalsRow && (
+                      {showTotals && totalsRow && !columns.length && (
                         <tr className="bg-orange-500/10 border-t-2 border-orange-500/50 font-bold">
                           {rows.map((_, j) => (
                             <td key={j} className="p-4 text-white">
