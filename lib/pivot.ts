@@ -115,15 +115,35 @@ export class PivotTableEngine {
   private static groupData(data: any[], config: PivotTableConfig): Map<string, any[]> {
     const grouped = new Map<string, any[]>();
 
-    data.forEach(row => {
+    // Логируем первую строку данных для отладки
+    if (data.length > 0) {
+      console.log('🔍 [groupData] First row:', data[0]);
+      console.log('🔍 [groupData] Available keys:', Object.keys(data[0]));
+      console.log('🔍 [groupData] Looking for fields:', config.rows.map(r => r.field));
+    }
+
+    data.forEach((row, idx) => {
       // Создаем ключ группировки
       const groupKey = config.rows
         .map(groupBy => {
           const value = row[groupBy.field];
           
+          // Логируем для первой строки
+          if (idx === 0) {
+            console.log(`🔍 [groupData] Field '${groupBy.field}' value:`, value, 'Type:', typeof value);
+            if (value === undefined) {
+              console.warn(`⚠️ Field '${groupBy.field}' is UNDEFINED! Available fields:`, Object.keys(row));
+            }
+          }
+          
           // Если это дата и указан период
           if (groupBy.period && value instanceof Date) {
             return this.formatDateByPeriod(value, groupBy.period);
+          }
+          
+          // Если значение undefined или null, используем 'N/A'
+          if (value === undefined || value === null) {
+            return 'N/A';
           }
           
           return String(value);
@@ -137,6 +157,7 @@ export class PivotTableEngine {
       grouped.get(groupKey)!.push(row);
     });
 
+    console.log('✅ [groupData] Grouped into', grouped.size, 'groups');
     return grouped;
   }
 
@@ -182,10 +203,30 @@ export class PivotTableEngine {
       // Вычисляем агрегации
       config.values.forEach(agg => {
         const fieldName = agg.alias || `${agg.type}_${agg.field}`;
+        
+        // Логируем для первой группы
+        if (result.length === 0 && rows.length > 0) {
+          console.log(`🔍 [aggregateData] Processing field '${agg.field}'`);
+          console.log(`🔍 [aggregateData] First row in group:`, rows[0]);
+          console.log(`🔍 [aggregateData] Value for '${agg.field}':`, rows[0][agg.field]);
+        }
+        
         const values = rows
-          .map(row => row[agg.field])
+          .map(row => {
+            const val = row[agg.field];
+            // Логируем первые 3 значения
+            if (result.length === 0 && rows.indexOf(row) < 3) {
+              console.log(`  - Row value for '${agg.field}':`, val, 'Type:', typeof val, 'IsNumber:', !isNaN(Number(val)));
+            }
+            return val;
+          })
           .filter(v => v !== null && v !== undefined && !isNaN(Number(v)))
           .map(v => Number(v));
+
+        if (result.length === 0) {
+          console.log(`✅ [aggregateData] Filtered values for '${agg.field}':`, values.slice(0, 5));
+          console.log(`✅ [aggregateData] Total valid values:`, values.length);
+        }
 
         switch (agg.type) {
           case 'sum':
@@ -205,6 +246,10 @@ export class PivotTableEngine {
           case 'count':
             aggregated[fieldName] = values.length;
             break;
+        }
+        
+        if (result.length === 0) {
+          console.log(`✅ [aggregateData] Result for '${fieldName}':`, aggregated[fieldName]);
         }
       });
 
