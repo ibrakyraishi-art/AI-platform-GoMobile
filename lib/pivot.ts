@@ -250,7 +250,15 @@ export function calculatePivotTable(
   calculatedFields?: any[],
   columns?: any[]
 ): { rows: any[], columnHeaders?: string[] } {
+  console.log('🔄 calculatePivotTable called');
+  console.log('📊 Data rows:', data?.length);
+  console.log('📊 First data row:', data?.[0]);
+  console.log('📊 Rows config:', rows);
+  console.log('📊 Values config:', values);
+  console.log('📊 Columns config:', columns);
+  
   if (!data || data.length === 0 || rows.length === 0 || values.length === 0) {
+    console.warn('⚠️ Missing data or configuration');
     return { rows: [] };
   }
 
@@ -332,16 +340,24 @@ function calculatePivotTableWithColumns(
   values: any[]
 ): { rows: any[], columnHeaders: string[] } {
   console.log('🔄 Creating pivot with ROWS and COLUMNS');
+  console.log('📊 Data sample:', data[0]);
+  console.log('📊 Row fields:', rows.map(r => r.field));
+  console.log('📊 Column fields:', columns.map(c => c.field));
+  console.log('📊 Value fields:', values.map(v => v.field));
   
   // Получаем уникальные значения для столбцов
   const columnValues = new Set<string>();
   data.forEach(row => {
-    const colKey = columns.map(c => row[c.field] ?? 'N/A').join(' | ');
+    const colKey = columns.map(c => {
+      const value = row[c.field];
+      console.log(`Column field '${c.field}' value:`, value);
+      return value ?? 'N/A';
+    }).join(' | ');
     columnValues.add(colKey);
   });
   
   const columnHeaders = Array.from(columnValues).sort();
-  console.log('Column headers:', columnHeaders);
+  console.log('✅ Column headers:', columnHeaders);
   
   // Группируем данные по строкам
   const rowGroups = new Map<string, any[]>();
@@ -379,12 +395,23 @@ function calculatePivotTableWithColumns(
         
         if (cellData.length === 0) {
           resultRow[colKey] = null;
+          console.log(`⚠️ No cell data for ${colKey}`);
           return;
         }
         
+        console.log(`📊 Processing ${colKey}, cell data count:`, cellData.length);
+        console.log(`📊 Sample cell data:`, cellData[0]);
+        console.log(`📊 Field '${v.field}' value:`, cellData[0]?.[v.field]);
+        
         const metricValues = cellData
-          .map(row => Number(row[v.field]))
+          .map(row => {
+            const val = row[v.field];
+            console.log(`  - Raw value for '${v.field}':`, val, 'Type:', typeof val);
+            return Number(val);
+          })
           .filter(val => !isNaN(val) && val !== null && val !== undefined);
+        
+        console.log(`✅ Metric values for ${colKey}:`, metricValues);
         
         if (metricValues.length === 0) {
           resultRow[colKey] = null;

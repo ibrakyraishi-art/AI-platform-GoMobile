@@ -64,6 +64,8 @@ export default function NewPivotTablePage() {
       // Если данные уже есть в датасете
       if (selectedDataset.data && selectedDataset.data.length > 0) {
         console.log('✅ Using cached data from dataset:', selectedDataset.data.length, 'rows');
+        console.log('📋 First row sample:', selectedDataset.data[0]);
+        console.log('📋 Available fields:', Object.keys(selectedDataset.data[0] || {}));
         setRawData(selectedDataset.data);
         return;
       }
@@ -106,6 +108,8 @@ export default function NewPivotTablePage() {
         }
 
         console.log('✅ Data loaded:', data.data.length, 'rows');
+        console.log('📋 First row sample:', data.data[0]);
+        console.log('📋 Available fields:', Object.keys(data.data[0] || {}));
         setRawData(data.data);
       } catch (error) {
         console.error('❌ Error loading data from source:', error);
